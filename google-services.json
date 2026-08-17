@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "481739343859",
+    "project_id": "pettogetter",
+    "storage_bucket": "pettogetter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481739343859:android:66ba7b00bc96318d04b486",
+        "android_client_info": {
+          "package_name": "com.vibecodingjapan.pettogetter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7wXMApbYfUCzmdl8mIdLY-4h7OgEm6s8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
