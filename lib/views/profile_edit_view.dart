@@ -68,7 +68,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(L10n.text(language, 'Family profile', '家族プロフィール')),
+        title: Text(L10n.text(
+            language, 'Family profile', '家族プロフィール', '家庭资料', '가족 프로필')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: store.isSavingProfile ? null : () => Navigator.pop(context),
@@ -104,9 +105,10 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(store.isSavingProfile
-                                    ? L10n.text(language, 'Saving…', '保存中…')
-                                    : L10n.text(
-                                        language, 'Save changes', '変更を保存')),
+                                    ? L10n.text(language, 'Saving…', '保存中…',
+                                        '保存中…', '저장 중…')
+                                    : L10n.text(language, 'Save changes',
+                                        '変更を保存', '保存更改', '변경사항 저장')),
                                 if (!store.isSavingProfile) ...[
                                   const SizedBox(width: 8),
                                   const Icon(Icons.check, size: 18),
@@ -120,6 +122,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                         language,
                         'Changes are shared with everyone in this household.',
                         '変更は家族全員と共有されます。',
+                        '更改会与家里的每个人共享。',
+                        '변경사항은 가족 모두와 공유됩니다.',
                       ),
                       textAlign: TextAlign.center,
                       style:
@@ -169,7 +173,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
         ),
         const SizedBox(height: 12),
         Text(
-          _t(context, 'Keep your family details current', '家族の情報を最新に保ちましょう'),
+          _t(context, 'Keep your family details current', '家族の情報を最新に保ちましょう',
+              '让家庭信息保持最新', '가족 정보를 최신으로 유지하세요'),
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
@@ -179,7 +184,9 @@ class _ProfileEditViewState extends State<ProfileEditView> {
         const SizedBox(height: 4),
         Text(
           _t(context, 'Your name and pet details update across devices.',
-              '名前とペット情報はすべての端末に反映されます。'),
+              '名前とペット情報はすべての端末に反映されます。',
+              '你的名字和宠物信息会同步到所有设备。',
+              '이름과 반려동물 정보가 모든 기기에 반영됩니다.'),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: PawColors.muted),
         ),
@@ -197,50 +204,59 @@ class _ProfileEditViewState extends State<ProfileEditView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PetSectionTitle(
-            title: L10n.text(language, 'About you', 'あなたについて'),
+            title: L10n.text(language, 'About you', 'あなたについて', '关于你', '당신에 대해'),
             detail: 'CAREGIVER',
           ),
           const SizedBox(height: 12),
-          _fieldLabel(L10n.text(language, 'Your name', 'あなたの名前'), Icons.person),
+          _fieldLabel(
+              L10n.text(language, 'Your name', 'あなたの名前', '你的名字', '이름'),
+              Icons.person),
           const SizedBox(height: 8),
           TextField(
             controller: _caregiverName,
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
-              hintText: L10n.text(
-                  language, 'How should your family see you?', '家族に表示する名前'),
+              hintText: L10n.text(language, 'How should your family see you?',
+                  '家族に表示する名前', '家人会怎么称呼你？', '가족에게 어떻게 보일까요?'),
             ),
           ),
           const SizedBox(height: 18),
           PetSectionTitle(
-            title: L10n.text(language, 'Home & pet', '家とペット'),
+            title: L10n.text(language, 'Home & pet', '家とペット', '家和宠物',
+                '집과 반려동물'),
             detail: 'SHARED',
           ),
           const SizedBox(height: 12),
           _fieldLabel(
-              L10n.text(language, 'Household name', '家の名前'), Icons.home),
+              L10n.text(language, 'Household name', '家の名前', '家庭名称', '가족 이름'),
+              Icons.home),
           const SizedBox(height: 8),
           TextField(
             controller: _householdName,
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
-              hintText: L10n.text(language, 'Household name', '家の名前'),
+              hintText: L10n.text(
+                  language, 'Household name', '家の名前', '家庭名称', '가족 이름'),
             ),
           ),
           const SizedBox(height: 12),
-          _fieldLabel(L10n.text(language, 'Pet name', 'ペットの名前'), Icons.pets),
+          _fieldLabel(
+              L10n.text(language, 'Pet name', 'ペットの名前', '宠物名字', '반려동물 이름'),
+              Icons.pets),
           const SizedBox(height: 8),
           TextField(
             controller: _petName,
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
-              hintText: L10n.text(language, 'Pet name', 'ペットの名前'),
+              hintText: L10n.text(
+                  language, 'Pet name', 'ペットの名前', '宠物名字', '반려동물 이름'),
             ),
           ),
           if (inviteCode.isNotEmpty) ...[
             const SizedBox(height: 20),
             PetSectionTitle(
-              title: L10n.text(language, 'Invite a caregiver', '家族を招待'),
+              title: L10n.text(
+                  language, 'Invite a caregiver', '家族を招待', '邀请家人', '가족 초대'),
               detail: 'SHARE ACCESS',
             ),
             const SizedBox(height: 14),
@@ -253,7 +269,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        L10n.text(language, 'Invite code', '招待コード'),
+                        L10n.text(
+                            language, 'Invite code', '招待コード', '邀请码', '초대 코드'),
                         style: const TextStyle(
                             fontSize: 12, color: PawColors.muted),
                       ),
@@ -275,8 +292,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                   icon: Icon(_copied ? Icons.check : Icons.content_copy,
                       size: 16),
                   label: Text(_copied
-                      ? L10n.text(language, 'Copied', 'コピー済み')
-                      : L10n.text(language, 'Copy', 'コピー')),
+                      ? L10n.text(language, 'Copied', 'コピー済み', '已复制', '복사됨')
+                      : L10n.text(language, 'Copy', 'コピー', '复制', '복사')),
                   style: TextButton.styleFrom(
                     foregroundColor: PawColors.purple,
                     backgroundColor: PawColors.lavender,
@@ -291,6 +308,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                 language,
                 'Share this code with someone you trust so they can join this household.',
                 '信頼できる人にこのコードを共有して、家族に招待しましょう。',
+                '把这个代码分享给你信任的人，让他们加入这个家庭。',
+                '신뢰하는 사람에게 이 코드를 공유해 가족에 초대하세요.',
               ),
               style: const TextStyle(fontSize: 12, color: PawColors.muted),
             ),
@@ -307,7 +326,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            L10n.text(language, 'Household membership', '家族メンバーシップ'),
+            L10n.text(language, 'Household membership', '家族メンバーシップ',
+                '家庭成员', '가족 멤버십'),
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -320,6 +340,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
               language,
               'Return this device to the welcome screen without deleting shared household data.',
               '共有データを削除せずに、この端末をウェルカム画面に戻します。',
+              '在不删除共享家庭数据的情况下，将本设备返回欢迎界面。',
+              '공유 데이터를 삭제하지 않고 이 기기를 환영 화면으로 되돌립니다.',
             ),
             style: const TextStyle(fontSize: 13, color: PawColors.muted),
           ),
@@ -329,7 +351,8 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                 ? null
                 : () => _confirmLeave(context, store),
             icon: const Icon(Icons.logout, size: 18),
-            label: Text(L10n.text(language, 'Leave household', '家から退出')),
+            label: Text(L10n.text(
+                language, 'Leave household', '家から退出', '退出家庭', '가족에서 나가기')),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               backgroundColor: Colors.red.withValues(alpha: 0.09),
@@ -350,21 +373,26 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(L10n.text(language, 'Leave this household?', 'この家から退出しますか？')),
+        title: Text(L10n.text(language, 'Leave this household?',
+            'この家から退出しますか？', '要退出这个家庭吗？', '이 가족에서 나가시겠어요?')),
         content: Text(L10n.text(
           language,
           'This device will return to the welcome screen. The shared household stays available to other caregivers, and you can rejoin later with the invite code.',
           'この端末はウェルカム画面に戻ります。共有データは他の家族に残り、後で招待コードで再参加できます。',
+          '本设备将返回欢迎界面。共享的家庭对其他家人仍然可用，之后你可以用邀请码重新加入。',
+          '이 기기는 환영 화면으로 돌아갑니다. 공유 데이터는 다른 가족에게 남으며, 나중에 초대 코드로 다시 참여할 수 있습니다.',
         )),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(L10n.text(language, 'Cancel', 'キャンセル')),
+            child: Text(
+                L10n.text(language, 'Cancel', 'キャンセル', '取消', '취소')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              L10n.text(language, 'Leave household', '家から退出'),
+              L10n.text(language, 'Leave household', '家から退出', '退出家庭',
+                  '가족에서 나가기'),
               style: const TextStyle(color: Colors.red),
             ),
           ),
@@ -411,6 +439,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     );
   }
 
-  String _t(BuildContext context, String en, String ja) =>
-      L10n.text(context.watch<AppLanguageStore>().language, en, ja);
+  String _t(BuildContext context, String en, String ja, String zh, String ko) =>
+      L10n.text(
+          context.watch<AppLanguageStore>().language, en, ja, zh, ko);
 }

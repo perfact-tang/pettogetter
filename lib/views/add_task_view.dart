@@ -55,7 +55,8 @@ class _AddTaskViewState extends State<AddTaskView> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(L10n.text(language, 'Add Task', 'ケアを追加')),
+        title: Text(
+            L10n.text(language, 'Add Task', 'ケアを追加', '添加护理', '케어 추가')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -72,7 +73,7 @@ class _AddTaskViewState extends State<AddTaskView> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(
-                    L10n.text(language, 'Save', '保存'),
+                    L10n.text(language, 'Save', '保存', '保存', '저장'),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
           ),
@@ -95,7 +96,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                             icon: Icons.add, color: PawColors.purple, size: 58),
                         const SizedBox(height: 8),
                         Text(
-                          L10n.text(language, 'A new care moment', '新しいケア'),
+                          L10n.text(language, 'A new care moment', '新しいケア',
+                              '新的护理时刻', '새로운 케어'),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -104,9 +106,16 @@ class _AddTaskViewState extends State<AddTaskView> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          language == AppLanguage.japanese
-                              ? '${store.household?.petName ?? 'ペット'}に必要なことを追加しましょう。'
-                              : 'Add one clear task so everyone knows what ${store.household?.petName ?? 'your pet'} needs.',
+                          switch (language) {
+                            AppLanguage.japanese =>
+                              '${store.household?.petName ?? 'ペット'}に必要なことを追加しましょう。',
+                            AppLanguage.chinese =>
+                              '添加一个明确的任务，让大家都知道${store.household?.petName ?? '你的宠物'}需要什么。',
+                            AppLanguage.korean =>
+                              '${store.household?.petName ?? '반려동물'}에게 필요한 일을 모두가 알 수 있도록 명확한 할 일을 추가하세요.',
+                            AppLanguage.english =>
+                              'Add one clear task so everyone knows what ${store.household?.petName ?? 'your pet'} needs.',
+                          },
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontSize: 13, color: PawColors.muted),
@@ -128,8 +137,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  L10n.text(
-                                      language, 'Scheduled for', '予定日'),
+                                  L10n.text(language, 'Scheduled for', '予定日',
+                                      '安排于', '예정일'),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -156,7 +165,7 @@ class _AddTaskViewState extends State<AddTaskView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _fieldLabel(
-                            L10n.text(language, 'Frequency', '頻度'),
+                            L10n.text(language, 'Frequency', '頻度', '频率', '빈도'),
                             Icons.repeat,
                           ),
                           const SizedBox(height: 12),
@@ -165,9 +174,10 @@ class _AddTaskViewState extends State<AddTaskView> {
                               Expanded(
                                 child: _typeButton(
                                   CareTaskKind.oneOff,
-                                  L10n.text(language, 'One-time', '一回のみ'),
-                                  L10n.text(
-                                      language, 'A dated need', '指定日のケア'),
+                                  L10n.text(language, 'One-time', '一回のみ',
+                                      '一次性', '일회성'),
+                                  L10n.text(language, 'A dated need', '指定日のケア',
+                                      '有日期的需求', '날짜가 정해진 케어'),
                                   Icons.add_circle_outline,
                                 ),
                               ),
@@ -175,8 +185,10 @@ class _AddTaskViewState extends State<AddTaskView> {
                               Expanded(
                                 child: _typeButton(
                                   CareTaskKind.routine,
-                                  L10n.text(language, 'Routine', '繰り返し'),
-                                  L10n.text(language, 'Choose days', '曜日を指定'),
+                                  L10n.text(language, 'Routine', '繰り返し',
+                                      '例行', '루틴'),
+                                  L10n.text(language, 'Choose days', '曜日を指定',
+                                      '选择星期', '요일 지정'),
                                   Icons.repeat,
                                 ),
                               ),
@@ -185,19 +197,26 @@ class _AddTaskViewState extends State<AddTaskView> {
                           const SizedBox(height: 10),
                           Text(
                             _kind == CareTaskKind.routine
-                                ? L10n.text(language,
+                                ? L10n.text(
+                                    language,
                                     'Choose the days and time this repeats.',
-                                    '繰り返す曜日と時間を選びます。')
-                                : L10n.text(language,
+                                    '繰り返す曜日と時間を選びます。',
+                                    '选择重复的星期几和时间。',
+                                    '반복할 요일과 시간을 선택하세요.')
+                                : L10n.text(
+                                    language,
                                     'This will appear only on the date you choose.',
-                                    '選んだ日に一度だけ表示されます。'),
+                                    '選んだ日に一度だけ表示されます。',
+                                    '这只会出现在你选择的日期。',
+                                    '선택한 날짜에만 표시됩니다.'),
                             style: const TextStyle(
                                 fontSize: 12, color: PawColors.muted),
                           ),
                           if (_kind == CareTaskKind.routine) ...[
                             const SizedBox(height: 12),
                             Text(
-                              L10n.text(language, 'Repeats on', '繰り返す曜日'),
+                              L10n.text(language, 'Repeats on', '繰り返す曜日',
+                                  '重复于', '반복 요일'),
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -222,7 +241,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _fieldLabel(
-                            L10n.text(language, 'Care category', 'カテゴリー'),
+                            L10n.text(language, 'Care category', 'カテゴリー',
+                                '护理分类', '케어 카테고리'),
                             Icons.grid_view,
                           ),
                           const SizedBox(height: 13),
@@ -247,16 +267,17 @@ class _AddTaskViewState extends State<AddTaskView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _fieldLabel(
-                            L10n.text(
-                                language, 'What needs to be done?', '具体的な名前'),
+                            L10n.text(language, 'What needs to be done?',
+                                '具体的な名前', '需要做什么？', '무엇을 해야 하나요?'),
                             Icons.checklist,
                           ),
                           const SizedBox(height: 9),
                           TextField(
                             controller: _title,
                             decoration: petFieldDecoration(
-                              hintText: L10n.text(
-                                  language, 'For example: Morning meal', '例：朝ごはん'),
+                              hintText: L10n.text(language,
+                                  'For example: Morning meal',
+                                  '例：朝ごはん', '例如：早餐', '예: 아침 식사'),
                             ),
                           ),
                         ],
@@ -269,17 +290,20 @@ class _AddTaskViewState extends State<AddTaskView> {
                         children: [
                           _fieldLabel(
                             _kind == CareTaskKind.routine
-                                ? L10n.text(
-                                    language, 'Start date and time', '開始日と時間')
-                                : L10n.text(language, 'Date and time', '日時'),
+                                ? L10n.text(language, 'Start date and time',
+                                    '開始日と時間', '开始日期和时间', '시작 날짜와 시간')
+                                : L10n.text(language, 'Date and time', '日時',
+                                    '日期和时间', '날짜와 시간'),
                             Icons.schedule,
                           ),
                           const SizedBox(height: 12),
                           _pickerTile(
                             icon: Icons.calendar_today,
                             label: _kind == CareTaskKind.routine
-                                ? L10n.text(language, 'Starts', '開始')
-                                : L10n.text(language, 'Date', '日付'),
+                                ? L10n.text(
+                                    language, 'Starts', '開始', '开始', '시작')
+                                : L10n.text(
+                                    language, 'Date', '日付', '日期', '날짜'),
                             value: DateFormat.yMMMd(language.rawValue)
                                 .format(_dueDate),
                             onTap: _pickDate,
@@ -287,7 +311,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                           const SizedBox(height: 10),
                           _pickerTile(
                             icon: Icons.schedule,
-                            label: L10n.text(language, 'Time', '時間'),
+                            label: L10n.text(
+                                language, 'Time', '時間', '时间', '시간'),
                             value: DateFormat.jm(language.rawValue)
                                 .format(_dueDate),
                             onTap: _pickTime,
@@ -310,7 +335,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  L10n.text(language, 'Urgent care', '緊急ケア'),
+                                  L10n.text(language, 'Urgent care', '緊急ケア',
+                                      '紧急护理', '긴급 케어'),
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600,
@@ -322,6 +348,8 @@ class _AddTaskViewState extends State<AddTaskView> {
                                     language,
                                     'Make this stand out for both caregivers.',
                                     '家族全員に目立つようにします。',
+                                    '让这条对所有家人都更醒目。',
+                                    '모든 가족이 알아보기 쉽게 표시합니다.',
                                   ),
                                   style: const TextStyle(
                                       fontSize: 12, color: PawColors.muted),
@@ -558,14 +586,52 @@ class _AddTaskViewState extends State<AddTaskView> {
   }
 
   String _scheduledDateText(AppLanguage language) {
-    return language == AppLanguage.japanese
-        ? DateFormat('M月d日 (E)', 'ja').format(_dueDate)
-        : DateFormat('EEEE, MMM d', 'en').format(_dueDate);
+    return switch (language) {
+      AppLanguage.japanese => DateFormat('M月d日 (E)', 'ja').format(_dueDate),
+      AppLanguage.chinese => DateFormat('M月d日 (E)', 'zh').format(_dueDate),
+      AppLanguage.korean => DateFormat('M월 d일 (E)', 'ko').format(_dueDate),
+      AppLanguage.english => DateFormat('EEEE, MMM d', 'en').format(_dueDate),
+    };
   }
 
   List<(int, String)> _weekdayOptions(AppLanguage language) {
-    return language == AppLanguage.japanese
-        ? const [(1, '日'), (2, '月'), (3, '火'), (4, '水'), (5, '木'), (6, '金'), (7, '土')]
-        : const [(1, 'S'), (2, 'M'), (3, 'T'), (4, 'W'), (5, 'T'), (6, 'F'), (7, 'S')];
+    return switch (language) {
+      AppLanguage.japanese => const [
+          (1, '日'),
+          (2, '月'),
+          (3, '火'),
+          (4, '水'),
+          (5, '木'),
+          (6, '金'),
+          (7, '土'),
+        ],
+      AppLanguage.chinese => const [
+          (1, '日'),
+          (2, '一'),
+          (3, '二'),
+          (4, '三'),
+          (5, '四'),
+          (6, '五'),
+          (7, '六'),
+        ],
+      AppLanguage.korean => const [
+          (1, '일'),
+          (2, '월'),
+          (3, '화'),
+          (4, '수'),
+          (5, '목'),
+          (6, '금'),
+          (7, '토'),
+        ],
+      AppLanguage.english => const [
+          (1, 'S'),
+          (2, 'M'),
+          (3, 'T'),
+          (4, 'W'),
+          (5, 'T'),
+          (6, 'F'),
+          (7, 'S'),
+        ],
+    };
   }
 }

@@ -83,8 +83,10 @@ class TaskCard extends StatelessWidget {
                           children: [
                             PetTag(
                               title: task.kind == CareTaskKind.routine
-                                  ? L10n.text(language, 'Routine', '繰り返し')
-                                  : L10n.text(language, 'One-time', '一回のみ'),
+                                  ? L10n.text(language, 'Routine', '繰り返し',
+                                      '例行', '루틴')
+                                  : L10n.text(language, 'One-time', '一回のみ',
+                                      '一次性', '일회성'),
                               icon: task.kind == CareTaskKind.routine
                                   ? Icons.repeat
                                   : Icons.add_circle_outline,
@@ -94,7 +96,8 @@ class TaskCard extends StatelessWidget {
                             ),
                             if (task.priority == CarePriority.urgent)
                               PetTag(
-                                title: L10n.text(language, 'Urgent', '緊急'),
+                                title: L10n.text(
+                                    language, 'Urgent', '緊急', '紧急', '긴급'),
                                 icon: Icons.error,
                                 color: PawColors.rose,
                               ),
@@ -192,37 +195,65 @@ class TaskCard extends StatelessWidget {
         final request = task.assignmentRequest;
         if (request != null) {
           if (request.requestedToID == currentID) {
-            return language == AppLanguage.japanese
-                ? '${request.requestedByNameSnapshot}さんからの依頼'
-                : '${request.requestedByNameSnapshot} asked you to take this';
+            return switch (language) {
+              AppLanguage.japanese =>
+                '${request.requestedByNameSnapshot}さんからの依頼',
+              AppLanguage.chinese => '${request.requestedByNameSnapshot}请你来负责',
+              AppLanguage.korean =>
+                '${request.requestedByNameSnapshot}님이 맡아달라고 요청했어요',
+              AppLanguage.english =>
+                '${request.requestedByNameSnapshot} asked you to take this',
+            };
           }
           if (request.mode == AssignmentMode.open) {
-            return L10n.text(
-                language, 'Open to anyone in the household', '家族の誰でも引き受けられます');
+            return L10n.text(language, 'Open to anyone in the household',
+                '家族の誰でも引き受けられます', '对家里的任何人开放', '가족 누구나 맡을 수 있습니다');
           }
-          return language == AppLanguage.japanese
-              ? '${request.requestedToNameSnapshot ?? '担当者'}さんの返事待ち'
-              : 'Waiting for ${request.requestedToNameSnapshot ?? 'a caregiver'}';
+          return switch (language) {
+            AppLanguage.japanese =>
+              '${request.requestedToNameSnapshot ?? '担当者'}さんの返事待ち',
+            AppLanguage.chinese =>
+              '等待${request.requestedToNameSnapshot ?? '家人'}回复',
+            AppLanguage.korean =>
+              '${request.requestedToNameSnapshot ?? '가족'}님의 답변을 기다리는 중',
+            AppLanguage.english =>
+              'Waiting for ${request.requestedToNameSnapshot ?? 'a caregiver'}',
+          };
         }
-        return L10n.text(
-            language, 'Nobody has claimed this yet', 'まだ担当者がいません');
+        return L10n.text(language, 'Nobody has claimed this yet',
+            'まだ担当者がいません', '还没有人认领', '아직 담당자가 없습니다');
       case CareTaskStatus.claimed:
         if (task.assigneeID == currentID) {
-          return L10n.text(language, 'You’re on it', 'あなたが担当中');
+          return L10n.text(
+              language, 'You’re on it', 'あなたが担当中', '你在负责', '당신이 맡고 있어요');
         }
-        return language == AppLanguage.japanese
-            ? '${task.assigneeNameSnapshot ?? '担当者'}さんが担当中'
-            : '${task.assigneeNameSnapshot ?? 'A caregiver'} is on it';
+        return switch (language) {
+          AppLanguage.japanese =>
+            '${task.assigneeNameSnapshot ?? '担当者'}さんが担当中',
+          AppLanguage.chinese => '${task.assigneeNameSnapshot ?? '家人'}正在负责',
+          AppLanguage.korean =>
+            '${task.assigneeNameSnapshot ?? '가족'}님이 맡고 있어요',
+          AppLanguage.english =>
+            '${task.assigneeNameSnapshot ?? 'A caregiver'} is on it',
+        };
       case CareTaskStatus.completed:
         final name = task.completedBy ?? 'A caregiver';
         final at = task.completedAt;
         if (at != null) {
           final time = _timeText(language, at);
-          return language == AppLanguage.japanese
-              ? '$nameさんが完了 · $time'
-              : 'Done by $name · $time';
+          return switch (language) {
+            AppLanguage.japanese => '$nameさんが完了 · $time',
+            AppLanguage.chinese => '$name已完成 · $time',
+            AppLanguage.korean => '$name님이 완료 · $time',
+            AppLanguage.english => 'Done by $name · $time',
+          };
         }
-        return language == AppLanguage.japanese ? '$nameさんが完了' : 'Done by $name';
+        return switch (language) {
+          AppLanguage.japanese => '$nameさんが完了',
+          AppLanguage.chinese => '$name已完成',
+          AppLanguage.korean => '$name님이 완료',
+          AppLanguage.english => 'Done by $name',
+        };
     }
   }
 
@@ -252,7 +283,8 @@ class _ActionButtons extends StatelessWidget {
             child: ElevatedButton(
               style: pawCompactButtonStyle(PawColors.green, filled: true),
               onPressed: () => store.complete(task),
-              child: Text(L10n.text(language, 'Mark done', '完了にする')),
+              child: Text(L10n.text(
+                  language, 'Mark done', '完了にする', '标记完成', '완료로 표시')),
             ),
           );
         }
@@ -282,7 +314,7 @@ class _UnclaimedActions extends StatelessWidget {
             child: ElevatedButton(
               style: pawCompactButtonStyle(PawColors.muted),
               onPressed: () => store.declineRequest(task),
-              child: Text(L10n.text(language, 'Decline', '断る')),
+              child: Text(L10n.text(language, 'Decline', '断る', '拒绝', '거절')),
             ),
           ),
           const SizedBox(width: 10),
@@ -290,7 +322,7 @@ class _UnclaimedActions extends StatelessWidget {
             child: ElevatedButton(
               style: pawCompactButtonStyle(PawColors.purple, filled: true),
               onPressed: () => store.acceptRequest(task),
-              child: Text(L10n.text(language, 'Accept', '引き受ける')),
+              child: Text(L10n.text(language, 'Accept', '引き受ける', '接受', '수락')),
             ),
           ),
         ],
@@ -304,7 +336,8 @@ class _UnclaimedActions extends StatelessWidget {
             child: ElevatedButton(
               style: pawCompactButtonStyle(PawColors.muted),
               onPressed: () => store.cancelRequest(task),
-              child: Text(L10n.text(language, 'Cancel request', '依頼を取り消す')),
+              child: Text(L10n.text(
+                  language, 'Cancel request', '依頼を取り消す', '取消请求', '요청 취소')),
             ),
           ),
           const SizedBox(width: 10),
@@ -312,7 +345,8 @@ class _UnclaimedActions extends StatelessWidget {
             child: ElevatedButton(
               style: pawCompactButtonStyle(PawColors.purple, filled: true),
               onPressed: () => store.claim(task),
-              child: Text(L10n.text(language, 'I’ll do it', '私がやる')),
+              child: Text(
+                  L10n.text(language, 'I’ll do it', '私がやる', '我来做', '제가 할게요')),
             ),
           ),
         ],
@@ -328,13 +362,15 @@ class _UnclaimedActions extends StatelessWidget {
         ElevatedButton(
           style: pawCompactButtonStyle(PawColors.purple, filled: true),
           onPressed: () => store.claim(task),
-          child: Text(L10n.text(language, 'I’ll do it', '私がやる')),
+          child: Text(
+              L10n.text(language, 'I’ll do it', '私がやる', '我来做', '제가 할게요')),
         ),
         const SizedBox(height: 10),
         ElevatedButton(
           style: pawCompactButtonStyle(PawColors.blue),
           onPressed: () => store.requestAnyone(task),
-          child: Text(L10n.text(language, 'Let anyone take it', '誰でも引き受ける')),
+          child: Text(L10n.text(
+              language, 'Let anyone take it', '誰でも引き受ける', '让任何人接取', '누구나 맡기')),
         ),
         const SizedBox(height: 10),
         ElevatedButton(
@@ -342,7 +378,8 @@ class _UnclaimedActions extends StatelessWidget {
           onPressed: otherCaregivers.isEmpty
               ? null
               : () => _showCaregiverPicker(context, otherCaregivers, store),
-          child: Text(L10n.text(language, 'Choose a person', '担当者を指定')),
+          child: Text(L10n.text(
+              language, 'Choose a person', '担当者を指定', '指定负责人', '담당자 지정')),
         ),
       ],
     );
@@ -368,7 +405,8 @@ class _UnclaimedActions extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                 child: Text(
-                  L10n.text(language, 'Choose who should take this', '担当者を選択'),
+                  L10n.text(language, 'Choose who should take this',
+                      '担当者を選択', '选择负责人', '담당자 선택'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -383,6 +421,8 @@ class _UnclaimedActions extends StatelessWidget {
                     language,
                     'Only this caregiver will be asked, and they can accept or decline.',
                     'この人だけに依頼します。引き受けるか断るかを選べます。',
+                    '只会询问这位家人，他/她可以选择接受或拒绝。',
+                    '이 사람에게만 요청하며, 수락하거나 거절할 수 있습니다.',
                   ),
                   style: const TextStyle(fontSize: 13, color: PawColors.muted),
                 ),

@@ -37,8 +37,8 @@ class _RootViewState extends State<RootView> {
       builder: (context) {
         final language = context.read<AppLanguageStore>().language;
         return AlertDialog(
-          title: Text(L10n.text(
-              language, 'Something went wrong', 'エラーが発生しました')),
+          title: Text(L10n.text(language, 'Something went wrong',
+              'エラーが発生しました', '出了点问题', '문제가 발생했습니다')),
           content: Text(message),
           actions: [
             TextButton(
@@ -147,15 +147,15 @@ class _HouseholdTabsState extends State<_HouseholdTabs> {
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.checklist),
-            label: L10n.text(language, 'Today', '今日'),
+            label: L10n.text(language, 'Today', '今日', '今天', '오늘'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.calendar_month),
-            label: L10n.text(language, 'Calendar', 'カレンダー'),
+            label: L10n.text(language, 'Calendar', 'カレンダー', '日历', '캘린더'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.history),
-            label: L10n.text(language, 'Activity', 'アクティビティ'),
+            label: L10n.text(language, 'Activity', 'アクティビティ', '活动', '활동'),
           ),
           const NavigationDestination(
             icon: Icon(Icons.workspace_premium),

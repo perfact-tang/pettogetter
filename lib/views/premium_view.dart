@@ -35,34 +35,45 @@ class PremiumView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           PetSectionTitle(
-                            title: L10n.text(language,
-                                'Made for the whole family', '家族みんなのために'),
+                            title: L10n.text(
+                                language,
+                                'Made for the whole family',
+                                '家族みんなのために',
+                                '为全家打造',
+                                '가족 모두를 위해'),
                             detail: 'PRO',
                           ),
                           const SizedBox(height: 14),
                           _feature(
-                              L10n.text(language,
-                                  'Unlimited pets and caregivers', 'ペットも家族も無制限'),
+                              L10n.text(
+                                  language,
+                                  'Unlimited pets and caregivers',
+                                  'ペットも家族も無制限',
+                                  '宠物和家人都无限制',
+                                  '반려동물과 가족 무제한'),
                               Icons.group,
                               PawColors.purple),
                           _feature(
                               L10n.text(language,
-                                  'Recurring medication routines', 'お薬ルーティン'),
+                                  'Recurring medication routines',
+                                  'お薬ルーティン', '重复用药例行', '반복 약 루틴'),
                               Icons.medication,
                               PawColors.rose),
                           _feature(
-                              L10n.text(
-                                  language, 'Complete care history', '完全なケア履歴'),
+                              L10n.text(language, 'Complete care history',
+                                  '完全なケア履歴', '完整护理记录', '완전한 케어 기록'),
                               Icons.history,
                               PawColors.blue),
                           _feature(
-                              L10n.text(
-                                  language, 'Pet sitter handoff mode', 'ペットシッター引継ぎ'),
+                              L10n.text(language, 'Pet sitter handoff mode',
+                                  'ペットシッター引継ぎ', '宠物保姆交接模式',
+                                  '펫시터 인수인계 모드'),
                               Icons.waving_hand,
                               PawColors.yellow),
                           _feature(
-                              L10n.text(
-                                  language, 'Smart care reminders', 'スマートリマインダー'),
+                              L10n.text(language, 'Smart care reminders',
+                                  'スマートリマインダー', '智能护理提醒',
+                                  '스마트 케어 리마인더'),
                               Icons.auto_awesome,
                               PawColors.green),
                         ],
@@ -73,17 +84,19 @@ class PremiumView extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _priceCard(
-                              L10n.text(language, 'Monthly', '月額'),
+                              L10n.text(language, 'Monthly', '月額', '月付', '월간'),
                               '¥300',
-                              L10n.text(language, 'per month', '月あたり'),
+                              L10n.text(
+                                  language, 'per month', '月あたり', '每月', '월'),
                               false),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _priceCard(
-                              L10n.text(language, 'Annual', '年額'),
+                              L10n.text(language, 'Annual', '年額', '年付', '연간'),
                               '¥2,000',
-                              L10n.text(language, 'per year', '年あたり'),
+                              L10n.text(
+                                  language, 'per year', '年あたり', '每年', '년'),
                               true),
                         ),
                       ],
@@ -95,8 +108,8 @@ class PremiumView extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(L10n.text(
-                              language, 'Start Free Trial', '無料トライアル')),
+                          Text(L10n.text(language, 'Start Free Trial',
+                              '無料トライアル', '开始免费试用', '무료 체험 시작')),
                           const SizedBox(width: 8),
                           const Icon(Icons.arrow_forward, size: 18),
                         ],
@@ -108,6 +121,8 @@ class PremiumView extends StatelessWidget {
                         language,
                         'Prototype pricing. Payment is not enabled in this build.',
                         '試作価格です。このビルドでは支払いは有効ではありません。',
+                        '原型定价。此版本尚未启用支付。',
+                        '프로토타입 가격입니다. 이 빌드에서는 결제가 활성화되지 않았습니다.',
                       ),
                       textAlign: TextAlign.center,
                       style:
@@ -177,7 +192,9 @@ class PremiumView extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  _t(context, 'More love. Less mental load.', 'もっと愛を。負担は少なく。'),
+                  _t(context, 'More love. Less mental load.',
+                      'もっと愛を。負担は少なく。', '更多爱，更少负担。',
+                      '더 많은 사랑, 더 적은 부담.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 20,
@@ -191,6 +208,8 @@ class PremiumView extends StatelessWidget {
                     context,
                     'Build a calmer care routine for every pet and every caregiver.',
                     'ペットにも家族にも、もっと穏やかなケアを。',
+                    '为每只宠物、每位家人，建立更从容的照护。',
+                    '모든 반려동물과 가족을 위해 더 차분한 케어 루틴을 만드세요.',
                   ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 13, color: PawColors.muted),
@@ -299,6 +318,7 @@ class PremiumView extends StatelessWidget {
     );
   }
 
-  String _t(BuildContext context, String en, String ja) =>
-      L10n.text(context.watch<AppLanguageStore>().language, en, ja);
+  String _t(BuildContext context, String en, String ja, String zh, String ko) =>
+      L10n.text(
+          context.watch<AppLanguageStore>().language, en, ja, zh, ko);
 }

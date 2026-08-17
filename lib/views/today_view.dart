@@ -44,7 +44,7 @@ class TodayView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(L10n.text(language, 'Today', '今日')),
+        title: Text(L10n.text(language, 'Today', '今日', '今天', '오늘')),
         actions: [
           PopupMenuButton<AppLanguage>(
             icon: const Icon(Icons.language, color: PawColors.purple),
@@ -100,10 +100,11 @@ class TodayView extends StatelessWidget {
                     _petHeroCard(context, store, language),
                     const SizedBox(height: 20),
                     _section(
-                      title: L10n.text(language, 'Needs a person', '担当が必要'),
+                      title: L10n.text(
+                          language, 'Needs a person', '担当が必要', '需要人照顾', '담당자 필요'),
                       detail: store.unclaimedTasks.isEmpty
-                          ? L10n.text(language, 'CLEAR', 'なし')
-                          : '${store.unclaimedTasks.length} ${L10n.text(language, 'UNCLAIMED', '未担当')}',
+                          ? L10n.text(language, 'CLEAR', 'なし', '无', '없음')
+                          : '${store.unclaimedTasks.length} ${L10n.text(language, 'UNCLAIMED', '未担当', '未认领', '미담당')}',
                       child: store.unclaimedTasks.isEmpty
                           ? _emptyState(context, language)
                           : Column(
@@ -119,9 +120,10 @@ class TodayView extends StatelessWidget {
                     if (store.claimedTasks.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       _section(
-                        title: L10n.text(language, 'In progress', '進行中'),
+                        title: L10n.text(
+                            language, 'In progress', '進行中', '进行中', '진행 중'),
                         detail:
-                            '${store.claimedTasks.length} ${L10n.text(language, 'CLAIMED', '担当者あり')}',
+                            '${store.claimedTasks.length} ${L10n.text(language, 'CLAIMED', '担当者あり', '已认领', '담당자 있음')}',
                         child: Column(
                           children: [
                             for (final task in store.claimedTasks)
@@ -136,8 +138,10 @@ class TodayView extends StatelessWidget {
                     if (store.completedTasks.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       _section(
-                        title: L10n.text(language, 'Done today', '今日の完了'),
-                        detail: L10n.text(language, 'SHARED CARE', 'みんなのケア'),
+                        title: L10n.text(
+                            language, 'Done today', '今日の完了', '今日已完成', '오늘 완료'),
+                        detail: L10n.text(language, 'SHARED CARE', 'みんなのケア',
+                            '共同照护', '함께하는 케어'),
                         child: Column(
                           children: [
                             for (final task in store.completedTasks.take(3))
@@ -179,7 +183,8 @@ class TodayView extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                L10n.text(language, 'Let’s make today a happy one.', '今日もいい一日に。'),
+                L10n.text(language, 'Let’s make today a happy one.',
+                    '今日もいい一日に。', '让今天也成为快乐的一天。', '오늘도 행복한 하루가 되길.'),
                 style: const TextStyle(fontSize: 14, color: PawColors.muted),
               ),
             ],
@@ -210,8 +215,9 @@ class TodayView extends StatelessWidget {
     final remaining = store.unclaimedTasks.length + store.claimedTasks.length;
     final summary = remaining == 0
         ? L10n.text(language, 'Everything is handled. Time for cuddles.',
-            '全部おわり。なでなでの時間。')
-        : '$remaining ${L10n.text(language, 'care moments left for today.', '件のケアが残っています。')}';
+            '全部おわり。なでなでの時間。', '一切都处理好了，该抱抱了。',
+            '다 끝났어요. 이제 안아줄 시간이에요.')
+        : '$remaining ${L10n.text(language, 'care moments left for today.', '件のケアが残っています。', '个护理待完成。', '건의 케어가 남았습니다.')}';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -246,7 +252,8 @@ class TodayView extends StatelessWidget {
                         size: 14, color: PawColors.purple),
                     const SizedBox(width: 5),
                     Text(
-                      L10n.text(language, 'CARE PULSE', 'ケアパルス'),
+                      L10n.text(language, 'CARE PULSE', 'ケアパルス', '护理脉搏',
+                          '케어 펄스'),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -257,7 +264,8 @@ class TodayView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  store.household?.petName ?? L10n.text(language, 'Your pet', 'あなたのペット'),
+                  store.household?.petName ??
+                      L10n.text(language, 'Your pet', 'あなたのペット', '你的宠物', '반려동물'),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -277,7 +285,8 @@ class TodayView extends StatelessWidget {
                     Flexible(
                       child: Text(
                         store.household?.name ??
-                            L10n.text(language, 'Your household', 'あなたの家族'),
+                            L10n.text(language, 'Your household', 'あなたの家族',
+                                '你的家庭', '가족'),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -349,7 +358,8 @@ class TodayView extends StatelessWidget {
           const CareIcon(icon: Icons.check, color: PawColors.green, size: 56),
           const SizedBox(height: 10),
           Text(
-            L10n.text(language, 'Everything is handled', '全部おわり'),
+            L10n.text(language, 'Everything is handled', '全部おわり',
+                '一切都处理好了', '다 끝났어요'),
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -359,7 +369,9 @@ class TodayView extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             L10n.text(language, 'Add another task when your pet needs care.',
-                'ケアが必要になったらタスクを追加しましょう。'),
+                'ケアが必要になったらタスクを追加しましょう。',
+                '宠物需要照顾时，再添加一个任务。',
+                '반려동물에게 케어가 필요할 때 할 일을 추가하세요.'),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: PawColors.muted),
           ),
@@ -371,7 +383,8 @@ class TodayView extends StatelessWidget {
                 builder: (_) => const AddTaskView(),
               ),
             ),
-            child: Text(L10n.text(language, 'Add a task', 'タスクを追加')),
+            child: Text(L10n.text(
+                language, 'Add a task', 'タスクを追加', '添加任务', '할 일 추가')),
           ),
         ],
       ),
@@ -383,23 +396,24 @@ class TodayView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PetSectionTitle(
-          title: L10n.text(language, 'Daily care', '毎日のケア'),
-          detail: L10n.text(language, 'AT A GLANCE', 'ひと目で'),
+          title: L10n.text(language, 'Daily care', '毎日のケア', '每日护理', '매일 케어'),
+          detail:
+              L10n.text(language, 'AT A GLANCE', 'ひと目で', '一目了然', '한눈에'),
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            _categoryTile(CareCategory.feeding,
-                L10n.text(language, 'Meals', 'ごはん')),
+            _categoryTile(
+                CareCategory.feeding, L10n.text(language, 'Meals', 'ごはん', '喂食', '식사')),
             const SizedBox(width: 10),
-            _categoryTile(CareCategory.walking,
-                L10n.text(language, 'Walks', '散歩')),
+            _categoryTile(
+                CareCategory.walking, L10n.text(language, 'Walks', '散歩', '散步', '산책')),
             const SizedBox(width: 10),
-            _categoryTile(CareCategory.medication,
-                L10n.text(language, 'Meds', 'お薬')),
+            _categoryTile(
+                CareCategory.medication, L10n.text(language, 'Meds', 'お薬', '用药', '약')),
             const SizedBox(width: 10),
-            _categoryTile(CareCategory.grooming,
-                L10n.text(language, 'Groom', 'お手入れ')),
+            _categoryTile(
+                CareCategory.grooming, L10n.text(language, 'Groom', 'お手入れ', '美容', '미용')),
           ],
         ),
       ],

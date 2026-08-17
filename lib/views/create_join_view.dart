@@ -97,13 +97,13 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                             segments: [
                               ButtonSegment(
                                 value: _Mode.create,
-                                label: Text(L10n.text(
-                                    language, 'Create a home', '家を作る')),
+                                label: Text(L10n.text(language, 'Create a home',
+                                    '家を作る', '创建家庭', '집 만들기')),
                               ),
                               ButtonSegment(
                                 value: _Mode.join,
                                 label: Text(L10n.text(
-                                    language, 'Join a home', '家に参加')),
+                                    language, 'Join a home', '家に参加', '加入家庭', '집 참여')),
                               ),
                             ],
                             selected: {_mode},
@@ -112,45 +112,53 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                           ),
                           const SizedBox(height: 18),
                           _fieldLabel(
-                              L10n.text(language, 'Your name', 'あなたの名前'),
+                              L10n.text(language, 'Your name', 'あなたの名前',
+                                  '你的名字', '이름'),
                               Icons.person),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _caregiverName,
                             decoration: petFieldDecoration(
-                              hintText: L10n.text(language,
-                                  'How should your family see you?', '家族に表示する名前'),
+                              hintText: L10n.text(
+                                  language,
+                                  'How should your family see you?',
+                                  '家族に表示する名前',
+                                  '家人会怎么称呼你？',
+                                  '가족에게 어떻게 보일까요?'),
                             ),
                           ),
                           if (_mode == _Mode.create) ...[
                             const SizedBox(height: 16),
                             _fieldLabel(
-                                L10n.text(language, 'Household', '家の名前'),
+                                L10n.text(language, 'Household', '家の名前',
+                                    '家庭', '가족 이름'),
                                 Icons.home),
                             const SizedBox(height: 8),
                             TextField(
                               controller: _householdName,
                               decoration: petFieldDecoration(
-                                hintText: L10n.text(
-                                    language, 'Household name', '家族の名前'),
+                                hintText: L10n.text(language, 'Household name',
+                                    '家族の名前', '家庭名称', '가족 이름'),
                               ),
                             ),
                             const SizedBox(height: 16),
                             _fieldLabel(
-                                L10n.text(language, 'Your pet', 'ペット'),
+                                L10n.text(language, 'Your pet', 'ペット',
+                                    '你的宠物', '반려동물'),
                                 Icons.pets),
                             const SizedBox(height: 8),
                             TextField(
                               controller: _petName,
                               decoration: petFieldDecoration(
-                                hintText: L10n.text(
-                                    language, 'Pet name', 'ペットの名前'),
+                                hintText: L10n.text(language, 'Pet name',
+                                    'ペットの名前', '宠物名字', '반려동물 이름'),
                               ),
                             ),
                           ] else ...[
                             const SizedBox(height: 16),
                             _fieldLabel(
-                                L10n.text(language, 'Invite code', '招待コード'),
+                                L10n.text(language, 'Invite code', '招待コード',
+                                    '邀请码', '초대 코드'),
                                 Icons.group),
                             const SizedBox(height: 8),
                             TextField(
@@ -160,7 +168,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                               autocorrect: false,
                               decoration: petFieldDecoration(
                                 hintText: L10n.text(language,
-                                    'Enter the six-character code', '6文字のコードを入力'),
+                                    'Enter the six-character code',
+                                    '6文字のコードを入力', '输入六位代码', '6자리 코드 입력'),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -169,6 +178,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                                 language,
                                 'Ask a caregiver in your household for their six-character code.',
                                 '家族から6文字の招待コードをもらってください。',
+                                '请向家里的家人索取六位邀请码。',
+                                '가족에게 6자리 초대 코드를 받으세요.',
                               ),
                               style: const TextStyle(
                                   fontSize: 12, color: PawColors.muted),
@@ -193,10 +204,10 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(_mode == _Mode.create
-                                    ? L10n.text(
-                                        language, 'Create household', '家を作成')
-                                    : L10n.text(
-                                        language, 'Join household', '家に参加')),
+                                    ? L10n.text(language, 'Create household',
+                                        '家を作成', '创建家庭', '가족 만들기')
+                                    : L10n.text(language, 'Join household',
+                                        '家に参加', '加入家庭', '가족 참여')),
                                 const SizedBox(width: 9),
                                 const Icon(Icons.arrow_forward, size: 18),
                               ],
@@ -208,6 +219,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                         language,
                         'One shared place for meals, walks, medicine, and handoffs.',
                         '食事、散歩、薬、引き継ぎをひとつに。',
+                        '喂食、散步、用药、交接，都在这一个地方。',
+                        '식사, 산책, 약, 인수인계를 한곳에.',
                       ),
                       textAlign: TextAlign.center,
                       style:
@@ -273,7 +286,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                 const SizedBox(height: 9),
                 Text(
                   _t(context, 'Shared care, without the guesswork.',
-                      '迷わない、みんなのケア。'),
+                      '迷わない、みんなのケア。', '共同照护，不再猜测。',
+                      '망설임 없는 함께하는 케어.'),
                   style: const TextStyle(color: PawColors.muted),
                 ),
                 const SizedBox(height: 9),
@@ -286,7 +300,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                     Flexible(
                       child: Text(
                         _t(context, 'A happier routine for every pet parent',
-                            'すべての飼い主に、もっと楽しい毎日を'),
+                            'すべての飼い主に、もっと楽しい毎日を',
+                            '让每位宠物家长都更轻松', '모든 반려인에게 더 행복한 일상을'),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -321,7 +336,8 @@ class _CreateJoinViewState extends State<CreateJoinView> {
     );
   }
 
-  String _t(BuildContext context, String en, String ja) {
-    return L10n.text(context.watch<AppLanguageStore>().language, en, ja);
+  String _t(BuildContext context, String en, String ja, String zh, String ko) {
+    return L10n.text(
+        context.watch<AppLanguageStore>().language, en, ja, zh, ko);
   }
 }

@@ -33,7 +33,8 @@ class _ScheduleViewState extends State<ScheduleView> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(L10n.text(language, 'Calendar', 'カレンダー')),
+        title:
+            Text(L10n.text(language, 'Calendar', 'カレンダー', '日历', '캘린더')),
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).push(
@@ -108,7 +109,8 @@ class _ScheduleViewState extends State<ScheduleView> {
                     const SizedBox(height: 2),
                     Text(
                       L10n.text(language, 'Routine and extra care together',
-                          'ルーティンと特別なケアを一緒に'),
+                          'ルーティンと特別なケアを一緒に', '例行和额外护理在一起',
+                          '루틴과 특별 케어를 함께'),
                       style: const TextStyle(
                           fontSize: 11, color: PawColors.muted),
                     ),
@@ -163,13 +165,13 @@ class _ScheduleViewState extends State<ScheduleView> {
           const SizedBox(height: 12),
           Row(
             children: [
-              _legend(L10n.text(language, 'Routine', '繰り返し'),
+              _legend(L10n.text(language, 'Routine', '繰り返し', '例行', '루틴'),
                   Icons.repeat, PawColors.purple),
               const SizedBox(width: 14),
-              _legend(L10n.text(language, 'One-time', '一回のみ'),
+              _legend(L10n.text(language, 'One-time', '一回のみ', '一次性', '일회성'),
                   Icons.circle, PawColors.blue),
               const SizedBox(width: 14),
-              _legend(L10n.text(language, 'Urgent', '緊急'),
+              _legend(L10n.text(language, 'Urgent', '緊急', '紧急', '긴급'),
                   Icons.error, PawColors.rose),
             ],
           ),
@@ -181,13 +183,14 @@ class _ScheduleViewState extends State<ScheduleView> {
   Widget _filterBar(AppLanguage language) {
     return Row(
       children: [
-        _filterButton(_Filter.all, L10n.text(language, 'All', 'すべて')),
-        const SizedBox(width: 8),
         _filterButton(
-            _Filter.routine, L10n.text(language, 'Routine', '繰り返し')),
+            _Filter.all, L10n.text(language, 'All', 'すべて', '全部', '전체')),
         const SizedBox(width: 8),
-        _filterButton(
-            _Filter.oneOff, L10n.text(language, 'One-time', '一回のみ')),
+        _filterButton(_Filter.routine,
+            L10n.text(language, 'Routine', '繰り返し', '例行', '루틴')),
+        const SizedBox(width: 8),
+        _filterButton(_Filter.oneOff,
+            L10n.text(language, 'One-time', '一回のみ', '一次性', '일회성')),
       ],
     );
   }
@@ -251,7 +254,8 @@ class _ScheduleViewState extends State<ScheduleView> {
                     size: 56),
                 const SizedBox(height: 10),
                 Text(
-                  L10n.text(language, 'No care planned yet', 'まだケアの予定がありません'),
+                  L10n.text(language, 'No care planned yet',
+                      'まだケアの予定がありません', '还没有安排护理', '아직 예정된 케어가 없습니다'),
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
@@ -260,9 +264,12 @@ class _ScheduleViewState extends State<ScheduleView> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  L10n.text(language,
+                  L10n.text(
+                      language,
                       'Add a one-time need or start a daily routine for this date.',
-                      'この日に一回のケアや毎日のルーティンを追加しましょう。'),
+                      'この日に一回のケアや毎日のルーティンを追加しましょう。',
+                      '为这一天添加一次性需求，或开始每日例行。',
+                      '이 날짜에 일회성 케어나 매일 루틴을 추가하세요.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 13, color: PawColors.muted),
                 ),
@@ -274,7 +281,8 @@ class _ScheduleViewState extends State<ScheduleView> {
                       builder: (_) => AddTaskView(initialDate: _selectedDate),
                     ),
                   ),
-                  child: Text(L10n.text(language, 'Add care', 'ケアを追加')),
+                  child: Text(L10n.text(
+                      language, 'Add care', 'ケアを追加', '添加护理', '케어 추가')),
                 ),
               ],
             ),
@@ -283,14 +291,15 @@ class _ScheduleViewState extends State<ScheduleView> {
           if (_filter != _Filter.oneOff && routineTasks.isNotEmpty)
             _taskGroup(
               language,
-              L10n.text(language, 'Daily routine', '毎日のルーティン'),
+              L10n.text(
+                  language, 'Daily routine', '毎日のルーティン', '每日例行', '매일 루틴'),
               'REPEATS',
               routineTasks,
             ),
           if (_filter != _Filter.routine && oneOffTasks.isNotEmpty)
             _taskGroup(
               language,
-              L10n.text(language, 'Extra care', '特別なケア'),
+              L10n.text(language, 'Extra care', '特別なケア', '额外护理', '특별 케어'),
               oneOffTasks.any((t) => t.priority == CarePriority.urgent)
                   ? 'URGENT INCLUDED'
                   : 'ONE-TIME',
@@ -339,9 +348,12 @@ class _ScheduleViewState extends State<ScheduleView> {
   }
 
   List<String> _weekdaySymbols(AppLanguage language) {
-    return language == AppLanguage.japanese
-        ? const ['日', '月', '火', '水', '木', '金', '土']
-        : const ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    return switch (language) {
+      AppLanguage.japanese => const ['日', '月', '火', '水', '木', '金', '土'],
+      AppLanguage.chinese => const ['日', '一', '二', '三', '四', '五', '六'],
+      AppLanguage.korean => const ['일', '월', '화', '수', '목', '금', '토'],
+      AppLanguage.english => const ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+    };
   }
 
   List<DateTime?> _monthDays(DateTime selected) {

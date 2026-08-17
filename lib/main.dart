@@ -12,9 +12,11 @@ import 'services/mock_care_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Date symbols for the English/Japanese date formatting used by intl.
+  // Date symbols for the English/Japanese/Chinese/Korean date formatting used by intl.
   await initializeDateFormatting('en');
   await initializeDateFormatting('ja');
+  await initializeDateFormatting('zh');
+  await initializeDateFormatting('ko');
 
   final language = await AppLanguageStore.load();
   final service = await _createService();

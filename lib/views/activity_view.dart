@@ -26,7 +26,8 @@ class ActivityView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(L10n.text(language, 'Activity', 'アクティビティ')),
+        title:
+            Text(L10n.text(language, 'Activity', 'アクティビティ', '活动', '활동')),
       ),
       body: Stack(
         children: [
@@ -44,9 +45,10 @@ class ActivityView extends StatelessWidget {
                       _emptyState(context, language)
                     else ...[
                       PetSectionTitle(
-                        title: L10n.text(language, 'Care history', 'ケア履歴'),
+                        title: L10n.text(
+                            language, 'Care history', 'ケア履歴', '护理记录', '케어 기록'),
                         detail:
-                            '${completed.length} ${L10n.text(language, 'COMPLETED', '完了')}',
+                            '${completed.length} ${L10n.text(language, 'COMPLETED', '完了', '已完成', '완료')}',
                       ),
                       const SizedBox(height: 14),
                       for (final task in completed)
@@ -99,7 +101,8 @@ class ActivityView extends StatelessWidget {
                         size: 14, color: PawColors.purple),
                     const SizedBox(width: 5),
                     Text(
-                      L10n.text(language, 'SHARED CARE', 'みんなのケア'),
+                      L10n.text(language, 'SHARED CARE', 'みんなのケア',
+                          '共同照护', '함께하는 케어'),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -110,8 +113,9 @@ class ActivityView extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  L10n.text(
-                      language, 'Every handoff,\nin one place.', 'すべての引き継ぎを\nひとつに。'),
+                  L10n.text(language, 'Every handoff,\nin one place.',
+                      'すべての引き継ぎを\nひとつに。', '每次交接，\n都在一处。',
+                      '모든 인수인계를\n한곳에.'),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -125,6 +129,8 @@ class ActivityView extends StatelessWidget {
                     language,
                     'See who cared for ${store.household?.petName ?? 'your pet'} and when.',
                     '${store.household?.petName ?? 'ペット'}のケアを誰がいつ行ったか確認できます。',
+                    '查看谁在何时照顾了${store.household?.petName ?? '你的宠物'}。',
+                    '${store.household?.petName ?? '반려동물'}의 케어를 누가 언제 했는지 확인할 수 있습니다.',
                   ),
                   style: const TextStyle(fontSize: 12, color: PawColors.muted),
                 ),
@@ -199,6 +205,8 @@ class ActivityView extends StatelessWidget {
                         language,
                         'Completed by ${task.completedBy ?? 'A caregiver'}',
                         '${task.completedBy ?? '担当者'}さんが完了',
+                        '${task.completedBy ?? '家人'}已完成',
+                        '${task.completedBy ?? '가족'}님이 완료',
                       ),
                       style: const TextStyle(
                           fontSize: 13, color: PawColors.muted),
@@ -238,7 +246,8 @@ class ActivityView extends StatelessWidget {
           const CareIcon(icon: Icons.history, color: PawColors.purple, size: 62),
           const SizedBox(height: 12),
           Text(
-            L10n.text(language, 'No activity yet', 'まだアクティビティがありません'),
+            L10n.text(language, 'No activity yet', 'まだアクティビティがありません',
+                '暂无活动', '아직 활동이 없습니다'),
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -251,6 +260,8 @@ class ActivityView extends StatelessWidget {
               language,
               'Completed care tasks will appear here for the whole household.',
               '完了したケアが家族全員にここで表示されます。',
+              '已完成的护理任务会在这里对全家人显示。',
+              '완료된 케어가 가족 모두에게 여기에 표시됩니다.',
             ),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: PawColors.muted),
