@@ -56,12 +56,14 @@ class FirebaseCareService implements CareService {
   Future<CareSession> createHousehold({
     required String name,
     required String petName,
+    required PetType petType,
     required String caregiverName,
   }) async {
     _ensureConfigured();
     final user = await _ensureAuthenticated();
     final householdRef = _db.collection('households').doc();
     final timeZoneIdentifier = DateTime.now().timeZoneName;
+    final pet = Pet(id: uuid(), name: petName, type: petType);
 
     for (var attempt = 0; attempt < _inviteCodeAttempts; attempt++) {
       final inviteCode = _makeInviteCode();
@@ -78,7 +80,7 @@ class FirebaseCareService implements CareService {
             _householdData(
               id: householdRef.id,
               name: name,
-              petName: petName,
+              pets: [pet],
               inviteCode: inviteCode,
               timeZoneIdentifier: timeZoneIdentifier,
               ownerID: user.uid,
@@ -106,7 +108,7 @@ class FirebaseCareService implements CareService {
             id: householdRef.id,
             name: name,
             inviteCode: inviteCode,
-            petName: petName,
+            pets: [pet],
             timeZoneIdentifier: timeZoneIdentifier,
           ),
           caregiver: Caregiver(id: user.uid, displayName: caregiverName),
@@ -298,7 +300,7 @@ class FirebaseCareService implements CareService {
     final batch = _db.batch();
     batch.update(_householdRef(household.id), {
       'name': householdName,
-      'petName': petName,
+      'pets': household.pets.map((e) => e.toJson()).toList(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
     batch.update(_memberRef(household.id, user.uid), {
@@ -306,6 +308,46 @@ class FirebaseCareService implements CareService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
     await batch.commit();
+  }
+
+  @override
+  Future<void> addPet(String householdID, Pet pet) async {
+    _ensureConfigured();
+    await _ensureAuthenticated();
+    await _db.runTransaction((tx) async {
+      final ref = _householdRef(householdID);
+      final doc = await tx.get(ref);
+      final pets = _petsFromData(doc.data())..add(pet);
+      tx.update(ref, {'pets': pets.map((e) => e.toJson()).toList()});
+    });
+  }
+
+  @override
+  Future<void> updatePet(String householdID, Pet pet) async {
+    _ensureConfigured();
+    await _ensureAuthenticated();
+    await _db.runTransaction((tx) async {
+      final ref = _householdRef(householdID);
+      final doc = await tx.get(ref);
+      final pets = [
+        for (final p in _petsFromData(doc.data())) p.id == pet.id ? pet : p,
+      ];
+      tx.update(ref, {'pets': pets.map((e) => e.toJson()).toList()});
+    });
+  }
+
+  @override
+  Future<void> removePet(String householdID, String petID) async {
+    _ensureConfigured();
+    await _ensureAuthenticated();
+    await _db.runTransaction((tx) async {
+      final ref = _householdRef(householdID);
+      final doc = await tx.get(ref);
+      final pets = _petsFromData(doc.data())
+          .where((p) => p.id != petID)
+          .toList();
+      tx.update(ref, {'pets': pets.map((e) => e.toJson()).toList()});
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -689,9 +731,10 @@ class FirebaseCareService implements CareService {
 
   Future<User> _ensureAuthenticated() async {
     final current = FirebaseAuth.instance.currentUser;
-    if (current != null) return current;
-    final result = await FirebaseAuth.instance.signInAnonymously();
-    return result.user!;
+    if (current == null) {
+      throw const CareServiceError(CareServiceErrorType.authenticationFailed);
+    }
+    return current;
   }
 
   void _validate(Caregiver caregiver, String userID) {
@@ -727,17 +770,32 @@ class FirebaseCareService implements CareService {
     final data = doc.data();
     final name = data?['name'] as String?;
     final inviteCode = data?['inviteCode'] as String?;
-    final petName = data?['petName'] as String?;
-    if (name == null || inviteCode == null || petName == null) {
+    if (name == null || inviteCode == null) {
       throw const CareServiceError(CareServiceErrorType.malformedData);
     }
     return Household(
       id: doc.id,
       name: name,
       inviteCode: inviteCode,
-      petName: petName,
+      pets: _petsFromData(data),
       timeZoneIdentifier: data?['timeZoneIdentifier'] as String? ?? '',
     );
+  }
+
+  List<Pet> _petsFromData(Map<String, dynamic>? data) {
+    final raw = data?['pets'] as List?;
+    if (raw != null) {
+      return raw.map((e) => Pet.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    final petName = data?['petName'] as String?;
+    if (petName == null || petName.isEmpty) return const [];
+    return [
+      Pet(
+        id: 'pet-legacy',
+        name: petName,
+        type: PetType.fromRaw(data?['petType'] as String? ?? 'cat'),
+      ),
+    ];
   }
 
   Caregiver _caregiverFrom(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -751,9 +809,10 @@ class FirebaseCareService implements CareService {
   CareRoutine _routineFrom(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final title = data?['title'] as String?;
-    final category = CareCategory.values
-        .where((e) => e.rawValue == data?['category'])
-        .firstOrNull;
+    final category = CareCategory.fromRaw(
+      data?['category'] as String? ?? 'other',
+      name: data?['categoryName'] as String?,
+    );
     final priority = CarePriority.values
         .where((e) => e.rawValue == data?['priority'])
         .firstOrNull;
@@ -766,7 +825,6 @@ class FirebaseCareService implements CareService {
     final isActive = data?['isActive'] as bool?;
 
     if (title == null ||
-        category == null ||
         hour == null ||
         minute == null ||
         startDate == null ||
@@ -791,6 +849,8 @@ class FirebaseCareService implements CareService {
               .map((e) => e.toInt())
               .toList() ??
           const [1, 2, 3, 4, 5, 6, 7],
+      interval: _int(data?['interval']) ?? 1,
+      petID: data?['petID'] as String?,
       hour: hour,
       minute: minute,
       startDate: startDate,
@@ -804,15 +864,15 @@ class FirebaseCareService implements CareService {
   CareTask _taskFrom(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final title = data?['title'] as String?;
-    final category = CareCategory.values
-        .where((e) => e.rawValue == data?['category'])
-        .firstOrNull;
+    final category = CareCategory.fromRaw(
+      data?['category'] as String? ?? 'other',
+      name: data?['categoryName'] as String?,
+    );
     final dueTime = (data?['dueTime'] as Timestamp?)?.toDate();
     final status = _status(data?['status'] as String?);
     final createdBy = data?['createdBy'] as String?;
 
     if (title == null ||
-        category == null ||
         dueTime == null ||
         status == null ||
         createdBy == null) {
@@ -851,6 +911,7 @@ class FirebaseCareService implements CareService {
       kind: CareTaskKind.fromRaw(data?['kind'] as String? ?? 'oneOff'),
       priority: CarePriority.fromRaw(data?['priority'] as String? ?? 'normal'),
       routineID: data?['routineID'] as String?,
+      petID: data?['petID'] as String?,
       status: status,
       assignmentRequest: request,
       assigneeID: data?['assigneeID'] as String?,
@@ -869,7 +930,7 @@ class FirebaseCareService implements CareService {
   Map<String, dynamic> _householdData({
     required String id,
     required String name,
-    required String petName,
+    required List<Pet> pets,
     required String inviteCode,
     required String timeZoneIdentifier,
     required String ownerID,
@@ -877,7 +938,7 @@ class FirebaseCareService implements CareService {
     return {
       'id': id,
       'name': name,
-      'petName': petName,
+      'pets': pets.map((e) => e.toJson()).toList(),
       'inviteCode': inviteCode,
       'timeZoneIdentifier': timeZoneIdentifier,
       'ownerID': ownerID,
@@ -902,10 +963,13 @@ class FirebaseCareService implements CareService {
     return {
       'id': routine.id,
       'title': routine.title,
-      'category': routine.category.rawValue,
+      'category': routine.category.id,
+      'categoryName': routine.category.name,
       'priority': routine.priority.rawValue,
       'frequency': routine.frequency.rawValue,
       'weekdays': routine.weekdays,
+      'interval': routine.interval,
+      'petID': routine.petID,
       'hour': routine.hour,
       'minute': routine.minute,
       'startDate': Timestamp.fromDate(routine.startDate),
@@ -926,11 +990,13 @@ class FirebaseCareService implements CareService {
     return {
       'id': task.id,
       'title': task.title,
-      'category': task.category.rawValue,
+      'category': task.category.id,
+      'categoryName': task.category.name,
       'dueTime': Timestamp.fromDate(task.dueTime),
       'kind': task.kind.rawValue,
       'priority': task.priority.rawValue,
       'routineID': task.routineID,
+      'petID': task.petID,
       'status': task.status.rawValue,
       'assignmentRequestID': request?.id,
       'assignmentMode': request?.mode.rawValue,

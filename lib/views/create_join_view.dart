@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/care_catalog.dart';
+import '../models/models.dart';
 import '../store/care_store.dart';
 import '../theme/app_theme.dart';
 import 'widgets/common.dart';
@@ -17,6 +19,7 @@ class CreateJoinView extends StatefulWidget {
 
 class _CreateJoinViewState extends State<CreateJoinView> {
   _Mode _mode = _Mode.create;
+  PetType _petType = PetType.cat;
   final _caregiverName = TextEditingController(text: '');
   final _householdName = TextEditingController(text: 'Mochi Family');
   final _petName = TextEditingController(text: 'Mochi');
@@ -45,6 +48,7 @@ class _CreateJoinViewState extends State<CreateJoinView> {
       store.createHousehold(
         name: _householdName.text,
         petName: _petName.text,
+        petType: _petType,
         caregiverName: _caregiverName.text,
       );
     } else {
@@ -118,6 +122,7 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                           const SizedBox(height: 8),
                           TextField(
                             controller: _caregiverName,
+                            onChanged: (_) => setState(() {}),
                             decoration: petFieldDecoration(
                               hintText: L10n.text(
                                   language,
@@ -136,6 +141,7 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _householdName,
+                              onChanged: (_) => setState(() {}),
                               decoration: petFieldDecoration(
                                 hintText: L10n.text(language, 'Household name',
                                     '家族の名前', '家庭名称', '가족 이름'),
@@ -149,11 +155,19 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _petName,
+                              onChanged: (_) => setState(() {}),
                               decoration: petFieldDecoration(
                                 hintText: L10n.text(language, 'Pet name',
                                     'ペットの名前', '宠物名字', '반려동물 이름'),
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            _fieldLabel(
+                                L10n.text(language, 'Pet type', 'ペットの種類',
+                                    '宠物类型', '반려동물 종류'),
+                                Icons.category),
+                            const SizedBox(height: 8),
+                            _petTypeSelector(language),
                           ] else ...[
                             const SizedBox(height: 16),
                             _fieldLabel(
@@ -163,6 +177,7 @@ class _CreateJoinViewState extends State<CreateJoinView> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _inviteCode,
+                              onChanged: (_) => setState(() {}),
                               textCapitalization:
                                   TextCapitalization.characters,
                               autocorrect: false,
@@ -333,6 +348,53 @@ class _CreateJoinViewState extends State<CreateJoinView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _petTypeSelector(AppLanguage language) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final type in PetType.values) _petTypeChip(type, language),
+      ],
+    );
+  }
+
+  Widget _petTypeChip(PetType type, AppLanguage language) {
+    final selected = _petType == type;
+    final accent = petTypeAccent(type);
+    return InkWell(
+      onTap: () => setState(() => _petType = type),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? accent.withValues(alpha: 0.16)
+              : PawColors.lavender.withValues(alpha: 0.52),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? accent : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(petTypeEmoji(type), style: const TextStyle(fontSize: 15)),
+            const SizedBox(width: 6),
+            Text(
+              petTypeName(language, type),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                color: selected ? accent : PawColors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

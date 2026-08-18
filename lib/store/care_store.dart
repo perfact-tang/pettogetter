@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/care_catalog.dart';
 import '../models/models.dart';
 import '../services/care_service.dart';
+import '../services/storage_service.dart';
 import '../utils/care_calendar.dart';
 import '../utils/extensions.dart';
 import '../utils/id.dart';
@@ -13,7 +14,9 @@ import '../utils/id.dart';
 /// Shared application state and actions, ported from `CareStore.swift`.
 /// Exposes a [ChangeNotifier] that Flutter widgets rebuild from.
 class CareStore extends ChangeNotifier {
-  CareStore(this._service);
+  CareStore(this._service) {
+    loadCustomCategories();
+  }
 
   final CareService _service;
 
@@ -29,7 +32,7 @@ class CareStore extends ChangeNotifier {
   bool _isSavingTask = false;
   bool _isSavingProfile = false;
   Set<String> _mutatingTaskIDs = {};
-  Uint8List? _petPhotoData;
+  List<CareCategory> _customCategories = [];
 
   int _sessionRequestGeneration = 0;
   bool _didAttemptSessionRestore = false;
@@ -39,6 +42,7 @@ class CareStore extends ChangeNotifier {
   // -------------------------------------------------------------------------
 
   Household? get household => _household;
+  List<CareCategory> get customCategories => _customCategories;
   Caregiver? get currentCaregiver => _currentCaregiver;
   List<CareTask> get tasks => _tasks;
   List<Caregiver> get caregivers => _caregivers;
@@ -49,7 +53,6 @@ class CareStore extends ChangeNotifier {
   bool get isSavingTask => _isSavingTask;
   bool get isSavingProfile => _isSavingProfile;
   Set<String> get mutatingTaskIDs => _mutatingTaskIDs;
-  Uint8List? get petPhotoData => _petPhotoData;
 
   Caregiver? get partnerCaregiver {
     final current = _currentCaregiver;
@@ -86,10 +89,7 @@ class CareStore extends ChangeNotifier {
     final includedIDs = <String>{};
 
     for (final routine in _routines.where((r) => r.isActive)) {
-      final routineStartDay = startOfDay(routine.startDate);
-      final runs = routine.frequency == CareRoutineFrequency.daily ||
-          routine.weekdays.contains(swiftWeekday(selectedDay));
-      if (selectedDay.isBefore(routineStartDay) || !runs) continue;
+      if (!routineRunsOn(routine, selectedDay)) continue;
 
       final due = dueTimeForRoutine(routine, selectedDay);
       if (due == null || !due.isBefore(nextDay)) continue;
@@ -104,6 +104,7 @@ class CareStore extends ChangeNotifier {
             kind: CareTaskKind.routine,
             priority: routine.priority,
             routineID: routine.id,
+            petID: routine.petID,
             status: CareTaskStatus.unclaimed,
             createdByID: routine.createdByID,
             createdBy: routine.createdByNameSnapshot,
@@ -156,6 +157,7 @@ class CareStore extends ChangeNotifier {
   Future<void> createHousehold({
     required String name,
     required String petName,
+    required PetType petType,
     required String caregiverName,
   }) async {
     if (_isLoading) return;
@@ -167,6 +169,7 @@ class CareStore extends ChangeNotifier {
     await _performSessionRequest(generation, () => _service.createHousehold(
           name: name,
           petName: petName,
+          petType: petType,
           caregiverName: caregiverName,
         ));
   }
@@ -188,6 +191,48 @@ class CareStore extends ChangeNotifier {
   }
 
   // -------------------------------------------------------------------------
+  // Custom care modules
+  // -------------------------------------------------------------------------
+
+  static const _customCategoriesKey = 'pettogetter.customCategories';
+
+  Future<void> loadCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_customCategoriesKey);
+      if (raw == null) return;
+      final list = jsonDecode(raw) as List;
+      _customCategories = list
+          .map((e) => CareCategory.fromRaw(
+                (e as Map<String, dynamic>)['id'] as String,
+                name: e['name'] as String?,
+              ))
+          .toList();
+      notifyListeners();
+    } catch (_) {
+      _customCategories = [];
+    }
+  }
+
+  Future<void> addCustomCategory(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    final category = CareCategory.custom(
+      id: generateCustomCategoryId(),
+      name: trimmed,
+    );
+    _customCategories = [..._customCategories, category];
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _customCategoriesKey,
+      jsonEncode(_customCategories
+          .map((c) => {'id': c.id, 'name': c.name})
+          .toList()),
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Adds
   // -------------------------------------------------------------------------
 
@@ -199,6 +244,8 @@ class CareStore extends ChangeNotifier {
     required DateTime date,
     CareRoutineFrequency frequency = CareRoutineFrequency.daily,
     List<int> weekdays = const [1, 2, 3, 4, 5, 6, 7],
+    int interval = 1,
+    String? petID,
   }) async {
     final household = _household;
     final currentCaregiver = _currentCaregiver;
@@ -221,6 +268,7 @@ class CareStore extends ChangeNotifier {
             dueTime: date,
             kind: CareTaskKind.oneOff,
             priority: priority,
+            petID: petID,
             status: CareTaskStatus.unclaimed,
             createdByID: currentCaregiver.id,
             createdBy: currentCaregiver.displayName,
@@ -235,6 +283,8 @@ class CareStore extends ChangeNotifier {
             priority: priority,
             frequency: frequency,
             weekdays: weekdays,
+            interval: interval,
+            petID: petID,
             hour: date.hour,
             minute: date.minute,
             startDate: startOfDay(date),
@@ -277,6 +327,7 @@ class CareStore extends ChangeNotifier {
     required String caregiverName,
     required String householdName,
     required String petName,
+    required PetType petType,
   }) async {
     final existingHousehold = _household;
     final existingCaregiver = _currentCaregiver;
@@ -300,8 +351,15 @@ class CareStore extends ChangeNotifier {
       return false;
     }
 
-    final updatedHousehold =
-        existingHousehold.copyWith(name: household, petName: pet);
+    final updatedHousehold = existingHousehold.copyWith(
+      name: household,
+      pets: existingHousehold.pets.isEmpty
+          ? [Pet(id: uuid(), name: pet, type: petType)]
+          : [
+              existingHousehold.pets.first.copyWith(name: pet, type: petType),
+              ...existingHousehold.pets.skip(1),
+            ],
+    );
     final updatedCaregiver = existingCaregiver.copyWith(displayName: caregiver);
 
     final generation = _sessionRequestGeneration;
@@ -329,19 +387,89 @@ class CareStore extends ChangeNotifier {
     }
   }
 
-  Future<void> savePetPhoto(Uint8List? data) async {
+  Future<bool> addPet({
+    required String name,
+    required PetType type,
+    int? ageYears,
+    String? habits,
+    double? weightKg,
+  }) async {
+    final household = _household;
+    if (household == null) return false;
+    final pet = Pet(
+      id: uuid(),
+      name: name.trim(),
+      type: type,
+      ageYears: ageYears,
+      habits: habits?.trim(),
+      weightKg: weightKg,
+      weightHistory: weightKg == null
+          ? const []
+          : [PetWeightEntry(date: DateTime.now(), weightKg: weightKg)],
+    );
+    try {
+      await _service.addPet(household.id, pet);
+      return true;
+    } catch (error) {
+      _errorMessage = _describe(error);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatePet(Pet pet) async {
+    final household = _household;
+    if (household == null) return false;
+    try {
+      var updated = pet;
+      final existing =
+          household.pets.where((p) => p.id == pet.id).firstOrNull;
+      if (existing != null &&
+          pet.weightKg != null &&
+          pet.weightKg != existing.weightKg) {
+        updated = pet.copyWith(
+          weightHistory: [
+            ...pet.weightHistory,
+            PetWeightEntry(date: DateTime.now(), weightKg: pet.weightKg!),
+          ],
+        );
+      }
+      await _service.updatePet(household.id, updated);
+      return true;
+    } catch (error) {
+      _errorMessage = _describe(error);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> removePet(String petID) async {
+    final household = _household;
+    if (household == null) return false;
+    try {
+      await _service.removePet(household.id, petID);
+      return true;
+    } catch (error) {
+      _errorMessage = _describe(error);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> savePetPhoto(Pet pet, Uint8List bytes) async {
     final household = _household;
     if (household == null) return;
-    final file = await _petPhotoFile(household.id);
-
-    if (data == null) {
-      if (await file.exists()) await file.delete();
-    } else {
-      await file.parent.create(recursive: true);
-      await file.writeAsBytes(data, flush: true);
+    try {
+      final url = await StorageService.instance.uploadPetPhoto(
+        householdID: household.id,
+        petID: pet.id,
+        bytes: bytes,
+      );
+      await updatePet(pet.copyWith(photoURL: url));
+    } catch (error) {
+      _errorMessage = _describe(error);
+      notifyListeners();
     }
-    _petPhotoData = data;
-    notifyListeners();
   }
 
   // -------------------------------------------------------------------------
@@ -459,7 +587,6 @@ class CareStore extends ChangeNotifier {
     _caregivers = [];
     _routines = [];
     _mutatingTaskIDs = {};
-    _petPhotoData = null;
     _isLoading = false;
     _isSavingTask = false;
     _isSavingProfile = false;
@@ -504,7 +631,6 @@ class CareStore extends ChangeNotifier {
       if (generation != _sessionRequestGeneration) return;
       _household = session.household;
       _currentCaregiver = session.caregiver;
-      await _loadPetPhoto(session.household.id);
       _observeDomain(session);
     } catch (error) {
       if (generation != _sessionRequestGeneration) return;
@@ -525,7 +651,6 @@ class CareStore extends ChangeNotifier {
       if (session == null) return;
       _household = session.household;
       _currentCaregiver = session.caregiver;
-      await _loadPetPhoto(session.household.id);
       _observeDomain(session);
     } catch (error) {
       if (generation != _sessionRequestGeneration) return;
@@ -587,27 +712,4 @@ class CareStore extends ChangeNotifier {
     return error.toString();
   }
 
-  // -------------------------------------------------------------------------
-  // Pet photo persistence
-  // -------------------------------------------------------------------------
-
-  Future<File> _petPhotoFile(String householdID) async {
-    final directory = await getApplicationSupportDirectory();
-    final safeID = base64UrlEncode(utf8.encode(householdID)).replaceAll('=', '');
-    return File('${directory.path}/PetPhotos/$safeID.jpg');
-  }
-
-  Future<void> _loadPetPhoto(String householdID) async {
-    try {
-      final file = await _petPhotoFile(householdID);
-      if (await file.exists()) {
-        _petPhotoData = await file.readAsBytes();
-      } else {
-        _petPhotoData = null;
-      }
-    } catch (_) {
-      _petPhotoData = null;
-    }
-    notifyListeners();
-  }
 }

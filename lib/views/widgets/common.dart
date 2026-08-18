@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
@@ -75,16 +73,23 @@ class PetArtwork extends StatelessWidget {
   }
 }
 
-/// Shows the selected pet photo or the default artwork.
+/// Shows a pet's photo (from Firebase Storage) or the default artwork.
 class PetPhotoView extends StatelessWidget {
-  const PetPhotoView({super.key, this.data});
+  const PetPhotoView({super.key, this.photoURL});
 
-  final Uint8List? data;
+  final String? photoURL;
 
   @override
   Widget build(BuildContext context) {
-    if (data != null) {
-      return Image.memory(data!, fit: BoxFit.cover);
+    if (photoURL != null && photoURL!.isNotEmpty) {
+      return Image.network(
+        photoURL!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          'assets/images/default_pet_photo.png',
+          fit: BoxFit.cover,
+        ),
+      );
     }
     return Image.asset(
       'assets/images/default_pet_photo.png',

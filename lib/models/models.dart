@@ -89,18 +89,96 @@ enum CarePriority {
       .firstWhere((e) => e.rawValue == value, orElse: () => CarePriority.normal);
 }
 
-enum CareCategory {
-  feeding('feeding'),
-  walking('walking'),
-  medication('medication'),
-  grooming('grooming'),
-  other('other');
+/// The pet species a household cares for.
+enum PetType {
+  cat('cat'),
+  dog('dog'),
+  bird('bird'),
+  rabbit('rabbit'),
+  snake('snake');
 
-  const CareCategory(this.rawValue);
+  const PetType(this.rawValue);
   final String rawValue;
 
-  static CareCategory fromRaw(String value) => CareCategory.values
-      .firstWhere((e) => e.rawValue == value, orElse: () => CareCategory.other);
+  static PetType fromRaw(String value) => PetType.values
+      .firstWhere((e) => e.rawValue == value, orElse: () => PetType.cat);
+}
+
+/// A care module (category).
+///
+/// Built-in modules use a stable slug [id] and are localized at display time
+/// (their [name] is null); custom modules carry a user-supplied [name] and a
+/// generated id so they can be persisted and shared without colliding with the
+/// built-in catalog.
+class CareCategory {
+  const CareCategory.builtIn(this.id) : name = null;
+
+  const CareCategory.custom({required this.id, required this.name});
+
+  final String id;
+  final String? name;
+
+  bool get isBuiltIn => name == null;
+  String get rawValue => id;
+
+  static const feeding = CareCategory.builtIn('feeding');
+  static const walking = CareCategory.builtIn('walking');
+  static const medication = CareCategory.builtIn('medication');
+  static const grooming = CareCategory.builtIn('grooming');
+  static const hospital = CareCategory.builtIn('hospital');
+  static const deworming = CareCategory.builtIn('deworming');
+  static const nailTrim = CareCategory.builtIn('nailTrim');
+  static const peePad = CareCategory.builtIn('peePad');
+  static const catLitter = CareCategory.builtIn('catLitter');
+  static const water = CareCategory.builtIn('water');
+  static const newFood = CareCategory.builtIn('newFood');
+  static const dogBath = CareCategory.builtIn('dogBath');
+  static const dogTraining = CareCategory.builtIn('dogTraining');
+  static const birdCage = CareCategory.builtIn('birdCage');
+  static const birdFeather = CareCategory.builtIn('birdFeather');
+  static const rabbitHay = CareCategory.builtIn('rabbitHay');
+  static const rabbitBedding = CareCategory.builtIn('rabbitBedding');
+  static const snakeFeed = CareCategory.builtIn('snakeFeed');
+  static const snakeShed = CareCategory.builtIn('snakeShed');
+  static const snakeTerrarium = CareCategory.builtIn('snakeTerrarium');
+  static const other = CareCategory.builtIn('other');
+
+  static const List<CareCategory> builtIns = [
+    feeding,
+    walking,
+    medication,
+    grooming,
+    hospital,
+    deworming,
+    nailTrim,
+    peePad,
+    catLitter,
+    water,
+    newFood,
+    dogBath,
+    dogTraining,
+    birdCage,
+    birdFeather,
+    rabbitHay,
+    rabbitBedding,
+    snakeFeed,
+    snakeShed,
+    snakeTerrarium,
+    other,
+  ];
+
+  static CareCategory fromRaw(String value, {String? name}) {
+    for (final category in builtIns) {
+      if (category.id == value) return category;
+    }
+    return CareCategory.custom(id: value, name: name ?? value);
+  }
+
+  @override
+  bool operator ==(Object other) => other is CareCategory && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 enum AssignmentMode {
@@ -116,7 +194,12 @@ enum AssignmentMode {
 
 enum CareRoutineFrequency {
   daily('daily'),
-  selectedDays('selectedDays');
+  selectedDays('selectedDays'),
+  intervalDays('intervalDays'),
+  intervalWeeks('intervalWeeks'),
+  intervalMonths('intervalMonths'),
+  nthWeekday('nthWeekday'),
+  intervalYears('intervalYears');
 
   const CareRoutineFrequency(this.rawValue);
   final String rawValue;
@@ -132,24 +215,121 @@ enum CareRoutineFrequency {
 // Value types
 // ---------------------------------------------------------------------------
 
+/// A dated weight measurement for a pet.
+class PetWeightEntry {
+  const PetWeightEntry({required this.date, required this.weightKg});
+
+  final DateTime date;
+  final double weightKg;
+
+  factory PetWeightEntry.fromJson(Map<String, dynamic> json) => PetWeightEntry(
+        date: _dateFromJson(json['date']) ?? DateTime.now(),
+        weightKg: (json['weightKg'] as num).toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'date': _dateToJson(date),
+        'weightKg': weightKg,
+      };
+}
+
+/// A single pet belonging to a household.
+class Pet {
+  const Pet({
+    required this.id,
+    required this.name,
+    this.type = PetType.cat,
+    this.ageYears,
+    this.habits,
+    this.photoURL,
+    this.weightKg,
+    this.weightHistory = const [],
+  });
+
+  final String id;
+  final String name;
+  final PetType type;
+  final int? ageYears;
+  final String? habits;
+  final String? photoURL;
+  final double? weightKg;
+  final List<PetWeightEntry> weightHistory;
+
+  Pet copyWith({
+    String? name,
+    PetType? type,
+    int? ageYears,
+    String? habits,
+    String? photoURL,
+    double? weightKg,
+    List<PetWeightEntry>? weightHistory,
+    bool clearAge = false,
+    bool clearHabits = false,
+    bool clearPhotoURL = false,
+    bool clearWeightKg = false,
+  }) {
+    return Pet(
+      id: id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      ageYears: clearAge ? null : (ageYears ?? this.ageYears),
+      habits: clearHabits ? null : (habits ?? this.habits),
+      photoURL: clearPhotoURL ? null : (photoURL ?? this.photoURL),
+      weightKg: clearWeightKg ? null : (weightKg ?? this.weightKg),
+      weightHistory: weightHistory ?? this.weightHistory,
+    );
+  }
+
+  factory Pet.fromJson(Map<String, dynamic> json) => Pet(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        type: PetType.fromRaw(json['type'] as String? ?? 'cat'),
+        ageYears:
+            json['ageYears'] == null ? null : _intFromJson(json['ageYears']),
+        habits: _stringFromJson(json['habits']),
+        photoURL: _stringFromJson(json['photoURL']),
+        weightKg: (json['weightKg'] as num?)?.toDouble(),
+        weightHistory: (json['weightHistory'] as List?)
+                ?.map((e) => PetWeightEntry.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'type': type.rawValue,
+        'ageYears': ageYears,
+        'habits': habits,
+        'photoURL': photoURL,
+        'weightKg': weightKg,
+        'weightHistory': weightHistory.map((e) => e.toJson()).toList(),
+      };
+}
+
 class Household {
   const Household({
     required this.id,
     required this.name,
     required this.inviteCode,
-    required this.petName,
+    this.pets = const [],
     this.timeZoneIdentifier = '',
   });
 
   final String id;
   final String name;
   final String inviteCode;
-  final String petName;
+  final List<Pet> pets;
   final String timeZoneIdentifier;
+
+  /// Convenience accessors backed by the first pet (used across the app for
+  /// single-pet copy). Prefer iterating [pets] for the full pet list.
+  String get petName => pets.isEmpty ? '' : pets.first.name;
+  PetType get petType => pets.isEmpty ? PetType.cat : pets.first.type;
 
   Household copyWith({
     String? name,
-    String? petName,
+    List<Pet>? pets,
     String? inviteCode,
     String? timeZoneIdentifier,
   }) {
@@ -157,24 +337,43 @@ class Household {
       id: id,
       name: name ?? this.name,
       inviteCode: inviteCode ?? this.inviteCode,
-      petName: petName ?? this.petName,
+      pets: pets ?? this.pets,
       timeZoneIdentifier: timeZoneIdentifier ?? this.timeZoneIdentifier,
     );
   }
 
-  factory Household.fromJson(Map<String, dynamic> json) => Household(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        inviteCode: json['inviteCode'] as String,
-        petName: json['petName'] as String,
-        timeZoneIdentifier: _stringFromJson(json['timeZoneIdentifier']) ?? '',
-      );
+  factory Household.fromJson(Map<String, dynamic> json) {
+    final petsRaw = json['pets'] as List?;
+    return Household(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      inviteCode: json['inviteCode'] as String,
+      pets: petsRaw != null
+          ? petsRaw
+              .map((e) => Pet.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : _legacyPetsFromJson(json),
+      timeZoneIdentifier: _stringFromJson(json['timeZoneIdentifier']) ?? '',
+    );
+  }
+
+  static List<Pet> _legacyPetsFromJson(Map<String, dynamic> json) {
+    final petName = json['petName'] as String?;
+    if (petName == null || petName.isEmpty) return const [];
+    return [
+      Pet(
+        id: 'pet-legacy',
+        name: petName,
+        type: PetType.fromRaw(json['petType'] as String? ?? 'cat'),
+      ),
+    ];
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'inviteCode': inviteCode,
-        'petName': petName,
+        'pets': pets.map((e) => e.toJson()).toList(),
         'timeZoneIdentifier': timeZoneIdentifier,
       };
 }
@@ -246,6 +445,8 @@ class CareRoutine {
     this.priority = CarePriority.normal,
     this.frequency = CareRoutineFrequency.daily,
     this.weekdays = const [1, 2, 3, 4, 5, 6, 7],
+    this.interval = 1,
+    this.petID,
     required this.hour,
     required this.minute,
     required this.startDate,
@@ -261,6 +462,8 @@ class CareRoutine {
   final CarePriority priority;
   final CareRoutineFrequency frequency;
   final List<int> weekdays;
+  final int interval;
+  final String? petID;
   final int hour;
   final int minute;
   final DateTime startDate;
@@ -272,11 +475,16 @@ class CareRoutine {
   factory CareRoutine.fromJson(Map<String, dynamic> json) => CareRoutine(
         id: json['id'] as String,
         title: json['title'] as String,
-        category: CareCategory.fromRaw(json['category'] as String),
+        category: CareCategory.fromRaw(
+          json['category'] as String,
+          name: _stringFromJson(json['categoryName']),
+        ),
         priority: CarePriority.fromRaw(json['priority'] as String? ?? 'normal'),
         frequency:
             CareRoutineFrequency.fromRaw(json['frequency'] as String? ?? 'daily'),
         weekdays: _weekdaysFromJson(json['weekdays']),
+        interval: _intFromJson(json['interval'], 1),
+        petID: _stringFromJson(json['petID']),
         hour: _intFromJson(json['hour']),
         minute: _intFromJson(json['minute']),
         startDate:
@@ -290,10 +498,13 @@ class CareRoutine {
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
-        'category': category.rawValue,
+        'category': category.id,
+        'categoryName': category.name,
         'priority': priority.rawValue,
         'frequency': frequency.rawValue,
         'weekdays': weekdays,
+        'interval': interval,
+        'petID': petID,
         'hour': hour,
         'minute': minute,
         'startDate': _dateToJson(startDate),
@@ -313,6 +524,7 @@ class CareTask {
     this.kind = CareTaskKind.oneOff,
     this.priority = CarePriority.normal,
     this.routineID,
+    this.petID,
     this.status = CareTaskStatus.unclaimed,
     this.assignmentRequest,
     this.assigneeID,
@@ -334,6 +546,7 @@ class CareTask {
   final CareTaskKind kind;
   final CarePriority priority;
   final String? routineID;
+  final String? petID;
   final CareTaskStatus status;
   final AssignmentRequest? assignmentRequest;
   final String? assigneeID;
@@ -367,6 +580,7 @@ class CareTask {
       kind: kind,
       priority: priority,
       routineID: routineID,
+      petID: petID,
       status: status ?? this.status,
       assignmentRequest: clearAssignmentRequest
           ? null
@@ -387,11 +601,15 @@ class CareTask {
   factory CareTask.fromJson(Map<String, dynamic> json) => CareTask(
         id: json['id'] as String,
         title: json['title'] as String,
-        category: CareCategory.fromRaw(json['category'] as String),
+        category: CareCategory.fromRaw(
+          json['category'] as String,
+          name: _stringFromJson(json['categoryName']),
+        ),
         dueTime: _dateFromJson(json['dueTime']) ?? DateTime.now(),
         kind: CareTaskKind.fromRaw(json['kind'] as String? ?? 'oneOff'),
         priority: CarePriority.fromRaw(json['priority'] as String? ?? 'normal'),
         routineID: _stringFromJson(json['routineID']),
+        petID: _stringFromJson(json['petID']),
         status: CareTaskStatus.fromRaw(json['status'] as String? ?? 'unclaimed'),
         assignmentRequest: json['assignmentRequest'] == null
             ? null
@@ -412,11 +630,13 @@ class CareTask {
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
-        'category': category.rawValue,
+        'category': category.id,
+        'categoryName': category.name,
         'dueTime': _dateToJson(dueTime),
         'kind': kind.rawValue,
         'priority': priority.rawValue,
         'routineID': routineID,
+        'petID': petID,
         'status': status.rawValue,
         'assignmentRequest': assignmentRequest?.toJson(),
         'assigneeID': assigneeID,

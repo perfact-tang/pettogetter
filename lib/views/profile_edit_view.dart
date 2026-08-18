@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/care_catalog.dart';
+import '../models/models.dart';
 import '../store/care_store.dart';
 import '../theme/app_theme.dart';
 import 'widgets/common.dart';
@@ -20,6 +22,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
   late final TextEditingController _petName;
   bool _copied = false;
   bool _didLoad = false;
+  PetType _petType = PetType.cat;
 
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     _caregiverName.text = store.currentCaregiver?.displayName ?? '';
     _householdName.text = store.household?.name ?? '';
     _petName.text = store.household?.petName ?? '';
+    _petType = store.household?.petType ?? PetType.cat;
     _didLoad = true;
   }
 
@@ -214,6 +218,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
           const SizedBox(height: 8),
           TextField(
             controller: _caregiverName,
+            onChanged: (_) => setState(() {}),
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
               hintText: L10n.text(language, 'How should your family see you?',
@@ -233,6 +238,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
           const SizedBox(height: 8),
           TextField(
             controller: _householdName,
+            onChanged: (_) => setState(() {}),
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
               hintText: L10n.text(
@@ -246,12 +252,19 @@ class _ProfileEditViewState extends State<ProfileEditView> {
           const SizedBox(height: 8),
           TextField(
             controller: _petName,
+            onChanged: (_) => setState(() {}),
             textCapitalization: TextCapitalization.words,
             decoration: petFieldDecoration(
               hintText: L10n.text(
                   language, 'Pet name', 'ペットの名前', '宠物名字', '반려동물 이름'),
             ),
           ),
+          const SizedBox(height: 12),
+          _fieldLabel(
+              L10n.text(language, 'Pet type', 'ペットの種類', '宠物类型', '반려동물 종류'),
+              Icons.category),
+          const SizedBox(height: 8),
+          _petTypeSelector(language),
           if (inviteCode.isNotEmpty) ...[
             const SizedBox(height: 20),
             PetSectionTitle(
@@ -418,6 +431,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
       caregiverName: _caregiverName.text,
       householdName: _householdName.text,
       petName: _petName.text,
+      petType: _petType,
     );
     if (saved && mounted) Navigator.of(context).pop();
   }
@@ -436,6 +450,53 @@ class _ProfileEditViewState extends State<ProfileEditView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _petTypeSelector(AppLanguage language) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final type in PetType.values) _petTypeChip(type, language),
+      ],
+    );
+  }
+
+  Widget _petTypeChip(PetType type, AppLanguage language) {
+    final selected = _petType == type;
+    final accent = petTypeAccent(type);
+    return InkWell(
+      onTap: () => setState(() => _petType = type),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? accent.withValues(alpha: 0.16)
+              : PawColors.lavender.withValues(alpha: 0.52),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? accent : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(petTypeEmoji(type), style: const TextStyle(fontSize: 15)),
+            const SizedBox(width: 6),
+            Text(
+              petTypeName(language, type),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                color: selected ? accent : PawColors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

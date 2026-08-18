@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/l10n.dart';
+import '../../models/care_catalog.dart';
 import '../../models/models.dart';
 import '../../store/care_store.dart';
 import '../../theme/app_theme.dart';
@@ -22,6 +23,8 @@ class TaskCard extends StatelessWidget {
 
     final isMutating = store.mutatingTaskIDs.contains(task.id);
     final stateColor = _stateColor;
+    final pet =
+        store.household?.pets.where((p) => p.id == task.petID).firstOrNull;
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -81,6 +84,13 @@ class TaskCard extends StatelessWidget {
                           spacing: 7,
                           runSpacing: 7,
                           children: [
+                            if (pet != null)
+                              PetTag(
+                                title:
+                                    '${petTypeEmoji(pet.type)} ${pet.name}',
+                                icon: Icons.pets,
+                                color: PawColors.green,
+                              ),
                             PetTag(
                               title: task.kind == CareTaskKind.routine
                                   ? L10n.text(language, 'Routine', '繰り返し',

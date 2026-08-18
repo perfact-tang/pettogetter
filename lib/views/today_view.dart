@@ -1,39 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/care_catalog.dart';
 import '../models/models.dart';
 import '../store/care_store.dart';
 import '../theme/app_theme.dart';
 import 'add_task_view.dart';
+import 'pet_detail_view.dart';
 import 'profile_edit_view.dart';
 import 'widgets/common.dart';
 import 'widgets/task_card.dart';
 
 class TodayView extends StatelessWidget {
   const TodayView({super.key});
-
-  Future<void> _pickPhoto(BuildContext context, CareStore store) async {
-    final picker = ImagePicker();
-    try {
-      final image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1600,
-        maxHeight: 1600,
-        imageQuality: 82,
-      );
-      if (image == null) return;
-      final bytes = await image.readAsBytes();
-      await store.savePetPhoto(bytes);
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Couldn't use that photo")),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +133,6 @@ class TodayView extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 20),
-                    _categories(context, language),
                   ],
                 ),
               ),
@@ -219,119 +197,13 @@ class TodayView extends StatelessWidget {
             '다 끝났어요. 이제 안아줄 시간이에요.')
         : '$remaining ${L10n.text(language, 'care moments left for today.', '件のケアが残っています。', '个护理待完成。', '건의 케어가 남았습니다.')}';
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            PawColors.lavender,
-            PawColors.peach.withValues(alpha: 0.72),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
-        boxShadow: [
-          BoxShadow(
-            color: PawColors.purpleDark.withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.auto_awesome,
-                        size: 14, color: PawColors.purple),
-                    const SizedBox(width: 5),
-                    Text(
-                      L10n.text(language, 'CARE PULSE', 'ケアパルス', '护理脉搏',
-                          '케어 펄스'),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: PawColors.purple,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  store.household?.petName ??
-                      L10n.text(language, 'Your pet', 'あなたのペット', '你的宠物', '반려동물'),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: PawColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  summary,
-                  style: const TextStyle(fontSize: 13, color: PawColors.muted),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.home, size: 15, color: PawColors.purpleDark),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        store.household?.name ??
-                            L10n.text(language, 'Your household', 'あなたの家族',
-                                '你的家庭', '가족'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: PawColors.purpleDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: () => _pickPhoto(context, store),
-            borderRadius: BorderRadius.circular(21),
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(21),
-                  child: SizedBox(
-                    width: 138,
-                    height: 156,
-                    child: PetPhotoView(data: store.petPhotoData),
-                  ),
-                ),
-                Positioned(
-                  bottom: -5,
-                  right: -5,
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: PawColors.purple,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: const Icon(Icons.photo_camera,
-                        size: 15, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return _PetHeroCarousel(
+      pets: store.household?.pets ?? const <Pet>[],
+      summary: summary,
+      householdName: store.household?.name ?? '',
+      language: language,
+      onTapPet: (pet) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PetDetailView(pet: pet)),
       ),
     );
   }
@@ -391,70 +263,184 @@ class TodayView extends StatelessWidget {
     );
   }
 
-  Widget _categories(BuildContext context, AppLanguage language) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PetSectionTitle(
-          title: L10n.text(language, 'Daily care', '毎日のケア', '每日护理', '매일 케어'),
-          detail:
-              L10n.text(language, 'AT A GLANCE', 'ひと目で', '一目了然', '한눈에'),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _categoryTile(
-                CareCategory.feeding, L10n.text(language, 'Meals', 'ごはん', '喂食', '식사')),
-            const SizedBox(width: 10),
-            _categoryTile(
-                CareCategory.walking, L10n.text(language, 'Walks', '散歩', '散步', '산책')),
-            const SizedBox(width: 10),
-            _categoryTile(
-                CareCategory.medication, L10n.text(language, 'Meds', 'お薬', '用药', '약')),
-            const SizedBox(width: 10),
-            _categoryTile(
-                CareCategory.grooming, L10n.text(language, 'Groom', 'お手入れ', '美容', '미용')),
+}
+
+class _PetHeroCarousel extends StatefulWidget {
+  const _PetHeroCarousel({
+    required this.pets,
+    required this.summary,
+    required this.householdName,
+    required this.language,
+    required this.onTapPet,
+  });
+
+  final List<Pet> pets;
+  final String summary;
+  final String householdName;
+  final AppLanguage language;
+  final void Function(Pet pet) onTapPet;
+
+  @override
+  State<_PetHeroCarousel> createState() => _PetHeroCarouselState();
+}
+
+class _PetHeroCarouselState extends State<_PetHeroCarousel> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pets = widget.pets;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            PawColors.lavender,
+            PawColors.peach.withValues(alpha: 0.72),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: PawColors.purpleDark.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 170,
+            child: PageView.builder(
+              itemCount: pets.isEmpty ? 1 : pets.length,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemBuilder: (context, i) =>
+                  _slide(context, pets.isEmpty ? null : pets[i]),
+            ),
+          ),
+          if (pets.length > 1) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < pets.length; i++) _dot(i == _index),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _slide(BuildContext context, Pet? pet) {
+    final language = widget.language;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.auto_awesome,
+                      size: 14, color: PawColors.purple),
+                  const SizedBox(width: 5),
+                  Text(
+                    L10n.text(
+                        language, 'CARE PULSE', 'ケアパルス', '护理脉搏', '케어 펄스'),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: PawColors.purple,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                pet?.name ??
+                    L10n.text(language, 'Your pet', 'あなたのペット', '你的宠物',
+                        '반려동물'),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: PawColors.ink,
+                ),
+              ),
+              if (pet != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  [
+                    '${petTypeEmoji(pet.type)} ${petTypeName(language, pet.type)}',
+                    if (pet.ageYears != null)
+                      '${pet.ageYears} ${L10n.text(language, 'years old', '歳', '岁', '살')}',
+                  ].join(' · '),
+                  style: const TextStyle(
+                      fontSize: 12, color: PawColors.purpleDark),
+                ),
+              ],
+              const SizedBox(height: 6),
+              Text(
+                widget.summary,
+                style: const TextStyle(fontSize: 13, color: PawColors.muted),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.home,
+                      size: 15, color: PawColors.purpleDark),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      widget.householdName.isEmpty
+                          ? L10n.text(language, 'Your household', 'あなたの家族',
+                              '你的家庭', '가족')
+                          : widget.householdName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: PawColors.purpleDark,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        InkWell(
+          onTap: pet == null ? null : () => widget.onTapPet(pet),
+          borderRadius: BorderRadius.circular(21),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(21),
+            child: SizedBox(
+              width: 138,
+              height: 156,
+              child: PetPhotoView(photoURL: pet?.photoURL),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _categoryTile(CareCategory category, String shortTitle) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: PawColors.purpleDark.withValues(alpha: 0.07),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            CareIcon(
-              icon: categoryIcon(category),
-              color: categoryAccent(category),
-              size: 42,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              shortTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: PawColors.ink,
-              ),
-            ),
-          ],
-        ),
+  Widget _dot(bool active) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      width: active ? 20 : 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: active
+            ? PawColors.purple
+            : PawColors.purple.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }

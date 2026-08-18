@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/care_catalog.dart';
 import '../models/models.dart';
 import '../store/care_store.dart';
 import '../theme/app_theme.dart';
@@ -23,6 +24,7 @@ class ScheduleView extends StatefulWidget {
 class _ScheduleViewState extends State<ScheduleView> {
   DateTime _selectedDate = DateTime.now();
   _Filter _filter = _Filter.all;
+  String? _petID;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +68,9 @@ class _ScheduleViewState extends State<ScheduleView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _calendarCard(context, store, language),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
+                    _petFilterBar(store, language),
+                    const SizedBox(height: 12),
                     _filterBar(language),
                     const SizedBox(height: 18),
                     _agenda(context, store, language),
@@ -157,7 +161,10 @@ class _ScheduleViewState extends State<ScheduleView> {
                 date: date,
                 isSelected: _sameDay(date, _selectedDate),
                 isToday: _sameDay(date, DateTime.now()),
-                tasks: store.tasksOn(date),
+                tasks: store
+                    .tasksOn(date)
+                    .where((t) => _petID == null || t.petID == _petID)
+                    .toList(),
                 onTap: () => setState(() => _selectedDate = date),
               );
             },
@@ -175,6 +182,37 @@ class _ScheduleViewState extends State<ScheduleView> {
                   Icons.error, PawColors.rose),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _petFilterBar(CareStore store, AppLanguage language) {
+    final pets = store.household?.pets ?? const <Pet>[];
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(L10n.text(language, 'All pets', 'すべてのペット',
+                  '所有宠物', '모든 반려동물')),
+              selected: _petID == null,
+              onSelected: (_) => setState(() => _petID = null),
+            ),
+          ),
+          for (final pet in pets)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                avatar: Text(petTypeEmoji(pet.type)),
+                label: Text(pet.name),
+                selected: _petID == pet.id,
+                onSelected: (_) => setState(() => _petID = pet.id),
+              ),
+            ),
         ],
       ),
     );
@@ -224,7 +262,10 @@ class _ScheduleViewState extends State<ScheduleView> {
   Widget _agenda(
       BuildContext context, CareStore store, AppLanguage language) {
     final locale = language.rawValue;
-    final allTasks = store.tasksOn(_selectedDate);
+    final allTasks = store
+        .tasksOn(_selectedDate)
+        .where((t) => _petID == null || t.petID == _petID)
+        .toList();
     final routineTasks =
         allTasks.where((t) => t.kind == CareTaskKind.routine).toList();
     final oneOffTasks =

@@ -7,5 +7,5 @@ abstract final class AppConfig {
   ///
   /// When false (the default), the app runs fully offline against
   /// [MockCareService] with seeded demo data, so it works immediately.
-  static const bool useFirebase = false;
+  static const bool useFirebase = true;
 }

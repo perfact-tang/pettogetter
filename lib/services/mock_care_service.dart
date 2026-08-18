@@ -22,7 +22,7 @@ class MockCareService implements CareService {
     id: 'demo-household',
     name: 'Mochi Family',
     inviteCode: 'PAW123',
-    petName: 'Mochi',
+    pets: [Pet(id: 'demo-pet', name: 'Mochi', type: PetType.cat)],
   );
 
   List<CareTask> _tasks = [];
@@ -116,10 +116,14 @@ class MockCareService implements CareService {
   Future<CareSession> createHousehold({
     required String name,
     required String petName,
+    required PetType petType,
     required String caregiverName,
   }) async {
     await _loaded;
-    _household = _household.copyWith(name: name, petName: petName);
+    _household = _household.copyWith(
+      name: name,
+      pets: [Pet(id: uuid(), name: petName, type: petType)],
+    );
     final caregiver = Caregiver(id: uuid(), displayName: caregiverName);
     _caregiver = caregiver;
     _caregivers = [caregiver, demoPartner];
@@ -274,12 +278,43 @@ class MockCareService implements CareService {
       throw const CareServiceError(CareServiceErrorType.invalidProfile);
     }
 
-    _household = _household.copyWith(name: householdName, petName: petName);
+    _household =
+        _household.copyWith(name: householdName, pets: household.pets);
     final updated = saved.copyWith(displayName: caregiverName);
     _caregiver = updated;
     _caregivers = [
       for (final c in _caregivers) c.id == updated.id ? updated : c,
     ];
+    await _persist();
+    _notifyAll();
+  }
+
+  @override
+  Future<void> addPet(String householdID, Pet pet) async {
+    _validateHousehold(householdID);
+    _household = _household.copyWith(pets: [..._household.pets, pet]);
+    await _persist();
+    _notifyAll();
+  }
+
+  @override
+  Future<void> updatePet(String householdID, Pet pet) async {
+    _validateHousehold(householdID);
+    _household = _household.copyWith(
+      pets: [
+        for (final p in _household.pets) p.id == pet.id ? pet : p,
+      ],
+    );
+    await _persist();
+    _notifyAll();
+  }
+
+  @override
+  Future<void> removePet(String householdID, String petID) async {
+    _validateHousehold(householdID);
+    _household = _household.copyWith(
+      pets: _household.pets.where((p) => p.id != petID).toList(),
+    );
     await _persist();
     _notifyAll();
   }

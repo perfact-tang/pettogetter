@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/l10n.dart';
+import '../models/care_catalog.dart';
 import '../models/models.dart';
 import '../store/care_store.dart';
 import '../theme/app_theme.dart';
@@ -23,6 +24,9 @@ class _AddTaskViewState extends State<AddTaskView> {
   CareCategory _category = CareCategory.feeding;
   CareTaskKind _kind = CareTaskKind.oneOff;
   CarePriority _priority = CarePriority.normal;
+  CareRoutineFrequency _frequency = CareRoutineFrequency.daily;
+  int _interval = 1;
+  String? _petID;
   final List<int> _weekdays = [1, 2, 3, 4, 5, 6, 7];
 
   @override
@@ -38,11 +42,6 @@ class _AddTaskViewState extends State<AddTaskView> {
     _title.dispose();
     super.dispose();
   }
-
-  CareRoutineFrequency get _routineFrequency =>
-      _kind == CareTaskKind.routine && _weekdays.length < 7
-          ? CareRoutineFrequency.selectedDays
-          : CareRoutineFrequency.daily;
 
   bool get _canSave => _title.text.trim().isNotEmpty;
 
@@ -160,6 +159,23 @@ class _AddTaskViewState extends State<AddTaskView> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    if (store.household != null &&
+                        store.household!.pets.length > 1)
+                      PetCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _fieldLabel(
+                              L10n.text(
+                                  language, 'Pet', 'ペット', '宠物', '반려동물'),
+                              Icons.pets,
+                            ),
+                            const SizedBox(height: 8),
+                            _petSelector(language, store),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 20),
                     PetCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,24 +229,53 @@ class _AddTaskViewState extends State<AddTaskView> {
                                 fontSize: 12, color: PawColors.muted),
                           ),
                           if (_kind == CareTaskKind.routine) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              L10n.text(language, 'Repeats on', '繰り返す曜日',
-                                  '重复于', '반복 요일'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: PawColors.purpleDark,
+                            const SizedBox(height: 14),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 14),
+                              decoration: BoxDecoration(
+                                color:
+                                    PawColors.lavender.withValues(alpha: 0.52),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                    color: PawColors.purple
+                                        .withValues(alpha: 0.08)),
+                              ),
+                              child: DropdownButton<CareRoutineFrequency>(
+                                value: _frequency,
+                                isExpanded: true,
+                                underline: const SizedBox.shrink(),
+                                items: [
+                                  for (final f in CareRoutineFrequency.values)
+                                    DropdownMenuItem(
+                                      value: f,
+                                      child: Text(_frequencyName(language, f)),
+                                    ),
+                                ],
+                                onChanged: (value) =>
+                                    setState(() => _frequency = value!),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                for (final day in _weekdayOptions(language))
-                                  _weekdayChip(day.$1, day.$2),
-                              ],
-                            ),
+                            if (_needsInterval) ...[
+                              const SizedBox(height: 12),
+                              _intervalStepper(language),
+                            ],
+                            if (_needsWeekdays) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  for (final day in _weekdayOptions(language))
+                                    _weekdayChip(
+                                      day.$1,
+                                      day.$2,
+                                      single: _frequency ==
+                                          CareRoutineFrequency.nthWeekday,
+                                    ),
+                                ],
+                              ),
+                            ],
                           ],
                         ],
                       ),
@@ -253,10 +298,7 @@ class _AddTaskViewState extends State<AddTaskView> {
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
                             childAspectRatio: 1.25,
-                            children: [
-                              for (final category in CareCategory.values)
-                                _categoryButton(category, language),
-                            ],
+                            children: _categoryGrid(language, store),
                           ),
                         ],
                       ),
@@ -274,6 +316,7 @@ class _AddTaskViewState extends State<AddTaskView> {
                           const SizedBox(height: 9),
                           TextField(
                             controller: _title,
+                            onChanged: (_) => setState(() {}),
                             decoration: petFieldDecoration(
                               hintText: L10n.text(language,
                                   'For example: Morning meal',
@@ -366,6 +409,22 @@ class _AddTaskViewState extends State<AddTaskView> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: pawPrimaryButtonStyle(),
+                      onPressed: (!_canSave || store.isSavingTask)
+                          ? null
+                          : () => _save(store),
+                      child: store.isSavingTask
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(L10n.text(
+                              language, 'Save', '保存', '保存', '저장')),
+                    ),
                     const SizedBox(height: 14),
                   ],
                 ),
@@ -412,10 +471,125 @@ class _AddTaskViewState extends State<AddTaskView> {
       kind: _kind,
       priority: _priority,
       date: _dueDate,
-      frequency: _routineFrequency,
+      frequency: _kind == CareTaskKind.routine
+          ? _frequency
+          : CareRoutineFrequency.daily,
       weekdays: _weekdays,
+      interval: _interval,
+      petID: _petID,
     );
     if (saved && mounted) Navigator.of(context).pop();
+  }
+
+  bool get _needsWeekdays =>
+      _frequency == CareRoutineFrequency.selectedDays ||
+      _frequency == CareRoutineFrequency.nthWeekday;
+
+  bool get _needsInterval =>
+      _frequency == CareRoutineFrequency.intervalDays ||
+      _frequency == CareRoutineFrequency.intervalWeeks ||
+      _frequency == CareRoutineFrequency.intervalMonths ||
+      _frequency == CareRoutineFrequency.intervalYears ||
+      _frequency == CareRoutineFrequency.nthWeekday;
+
+  String _frequencyName(AppLanguage language, CareRoutineFrequency f) {
+    return switch (f) {
+      CareRoutineFrequency.daily =>
+        L10n.text(language, 'Every day', '毎日', '每天', '매일'),
+      CareRoutineFrequency.selectedDays =>
+        L10n.text(language, 'On selected days', '指定した曜日', '指定星期', '지정 요일'),
+      CareRoutineFrequency.intervalDays =>
+        L10n.text(language, 'Every N days', 'N日ごと', '每 N 天', 'N일마다'),
+      CareRoutineFrequency.intervalWeeks =>
+        L10n.text(language, 'Every N weeks', 'N週間ごと', '每 N 周', 'N주마다'),
+      CareRoutineFrequency.intervalMonths =>
+        L10n.text(language, 'Every N months', 'Nか月ごと', '每 N 个月', 'N개월마다'),
+      CareRoutineFrequency.nthWeekday => L10n.text(
+          language, 'Nth weekday of month', '毎月第N週の曜日', '每月第 N 个星期几',
+          '매월 N번째 요일'),
+      CareRoutineFrequency.intervalYears =>
+        L10n.text(language, 'Every N years', 'N年ごと', '每 N 年', 'N년마다'),
+    };
+  }
+
+  Widget _petSelector(AppLanguage language, CareStore store) {
+    final pets = store.household?.pets ?? const <Pet>[];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: Text(L10n.text(language, 'All pets', 'すべてのペット', '所有宠物',
+              '모든 반려동물')),
+          selected: _petID == null,
+          onSelected: (_) => setState(() => _petID = null),
+        ),
+        for (final pet in pets)
+          ChoiceChip(
+            avatar: Text(petTypeEmoji(pet.type)),
+            label: Text(pet.name),
+            selected: _petID == pet.id,
+            onSelected: (_) => setState(() => _petID = pet.id),
+          ),
+      ],
+    );
+  }
+
+  Widget _intervalStepper(AppLanguage language) {
+    final isWeek = _frequency == CareRoutineFrequency.nthWeekday;
+    final max = isWeek ? 5 : 999;
+    final label = isWeek
+        ? L10n.text(language, 'Week of month', '月の第何週', '第几周', '몇 번째 주')
+        : L10n.text(language, 'Every N', '間隔 N', '每 N', '간격 N');
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: PawColors.purpleDark),
+          ),
+        ),
+        _stepperButton(Icons.remove, () => _adjustInterval(-1, max)),
+        Container(
+          width: 48,
+          alignment: Alignment.center,
+          child: Text(
+            '$_interval',
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: PawColors.ink),
+          ),
+        ),
+        _stepperButton(Icons.add, () => _adjustInterval(1, max)),
+      ],
+    );
+  }
+
+  Widget _stepperButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: PawColors.lavender,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 18, color: PawColors.purple),
+      ),
+    );
+  }
+
+  void _adjustInterval(int delta, int max) {
+    setState(() {
+      _interval = (_interval + delta).clamp(1, max);
+    });
   }
 
   Widget _typeButton(
@@ -464,11 +638,15 @@ class _AddTaskViewState extends State<AddTaskView> {
     );
   }
 
-  Widget _weekdayChip(int value, String label) {
+  Widget _weekdayChip(int value, String label, {bool single = false}) {
     final selected = _weekdays.contains(value);
     return InkWell(
       onTap: () => setState(() {
-        if (selected && _weekdays.length > 1) {
+        if (single) {
+          _weekdays
+            ..clear()
+            ..add(value);
+        } else if (selected && _weekdays.length > 1) {
           _weekdays.remove(value);
         } else if (!selected) {
           _weekdays.add(value);
@@ -493,6 +671,86 @@ class _AddTaskViewState extends State<AddTaskView> {
         ),
       ),
     );
+  }
+
+  List<Widget> _categoryGrid(AppLanguage language, CareStore store) {
+    final petType = store.household?.petType ?? PetType.cat;
+    return [
+      for (final category in categoriesForPetType(petType))
+        _categoryButton(category, language),
+      for (final category in store.customCategories)
+        _categoryButton(category, language),
+      _newCategoryButton(language),
+    ];
+  }
+
+  Widget _newCategoryButton(AppLanguage language) {
+    return InkWell(
+      onTap: () => _showNewCategoryDialog(language),
+      borderRadius: BorderRadius.circular(17),
+      child: Container(
+        decoration: BoxDecoration(
+          color: PawColors.cream,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(
+            color: PawColors.purple.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add, color: PawColors.purple, size: 30),
+            const SizedBox(height: 4),
+            Text(
+              L10n.text(language, 'Custom', 'カスタム', '自定义', '사용자 지정'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: PawColors.purple,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showNewCategoryDialog(AppLanguage language) async {
+    final store = context.read<CareStore>();
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(L10n.text(language, 'New care module', '新しいケアモジュール',
+            '新护理模块', '새 케어 모듈')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: petFieldDecoration(
+            hintText: L10n.text(
+                language, 'Module name', 'モジュール名', '模块名称', '모듈 이름'),
+          ),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+                L10n.text(language, 'Cancel', 'キャンセル', '取消', '취소')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: Text(L10n.text(language, 'Add', '追加', '添加', '추가')),
+          ),
+        ],
+      ),
+    );
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    await store.addCustomCategory(trimmed);
   }
 
   Widget _categoryButton(CareCategory category, AppLanguage language) {

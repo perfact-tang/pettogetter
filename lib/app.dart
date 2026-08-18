@@ -5,7 +5,7 @@ import 'l10n/l10n.dart';
 import 'services/care_service.dart';
 import 'store/care_store.dart';
 import 'theme/app_theme.dart';
-import 'views/root_view.dart';
+import 'views/auth_gate.dart';
 
 class CopawApp extends StatelessWidget {
   const CopawApp({super.key, required this.language, required this.service});
@@ -28,7 +28,7 @@ class CopawApp extends StatelessWidget {
         title: 'copaw',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
-        home: const RootView(),
+        home: const AuthGate(),
       ),
     );
   }

@@ -20,33 +20,57 @@ abstract final class PawColors {
 /// Per-category accent color and icon (Material equivalents of the SF Symbols
 /// used in the SwiftUI original).
 Color categoryAccent(CareCategory category) {
-  switch (category) {
-    case CareCategory.feeding:
-      return PawColors.purple;
-    case CareCategory.walking:
-      return PawColors.blue;
-    case CareCategory.medication:
-      return PawColors.rose;
-    case CareCategory.grooming:
-      return PawColors.yellow;
-    case CareCategory.other:
-      return PawColors.green;
-  }
+  if (!category.isBuiltIn) return PawColors.purple;
+  return switch (category.id) {
+    'feeding' => PawColors.purple,
+    'walking' => PawColors.blue,
+    'medication' => PawColors.rose,
+    'grooming' => PawColors.yellow,
+    'hospital' => PawColors.rose,
+    'deworming' => PawColors.green,
+    'nailTrim' => PawColors.blue,
+    'peePad' => PawColors.blue,
+    'catLitter' => PawColors.purple,
+    'water' => PawColors.blue,
+    'newFood' => PawColors.purple,
+    'dogBath' => PawColors.blue,
+    'dogTraining' => PawColors.purple,
+    'birdCage' => PawColors.yellow,
+    'birdFeather' => PawColors.yellow,
+    'rabbitHay' => PawColors.green,
+    'rabbitBedding' => PawColors.green,
+    'snakeFeed' => PawColors.green,
+    'snakeShed' => PawColors.green,
+    'snakeTerrarium' => PawColors.green,
+    _ => PawColors.green,
+  };
 }
 
 IconData categoryIcon(CareCategory category) {
-  switch (category) {
-    case CareCategory.feeding:
-      return Icons.restaurant;
-    case CareCategory.walking:
-      return Icons.directions_walk;
-    case CareCategory.medication:
-      return Icons.medication;
-    case CareCategory.grooming:
-      return Icons.auto_awesome;
-    case CareCategory.other:
-      return Icons.pets;
-  }
+  if (!category.isBuiltIn) return Icons.extension;
+  return switch (category.id) {
+    'feeding' => Icons.restaurant,
+    'walking' => Icons.directions_walk,
+    'medication' => Icons.medication,
+    'grooming' => Icons.auto_awesome,
+    'hospital' => Icons.local_hospital,
+    'deworming' => Icons.bug_report,
+    'nailTrim' => Icons.content_cut,
+    'peePad' => Icons.grid_view,
+    'catLitter' => Icons.cleaning_services,
+    'water' => Icons.water_drop,
+    'newFood' => Icons.fastfood,
+    'dogBath' => Icons.bathtub,
+    'dogTraining' => Icons.school,
+    'birdCage' => Icons.grid_view,
+    'birdFeather' => Icons.spa,
+    'rabbitHay' => Icons.grass,
+    'rabbitBedding' => Icons.bed,
+    'snakeFeed' => Icons.set_meal,
+    'snakeShed' => Icons.autorenew,
+    'snakeTerrarium' => Icons.thermostat,
+    _ => Icons.pets,
+  };
 }
 
 ThemeData buildAppTheme() {

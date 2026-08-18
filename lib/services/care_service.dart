@@ -103,6 +103,7 @@ abstract class CareService {
   Future<CareSession> createHousehold({
     required String name,
     required String petName,
+    required PetType petType,
     required String caregiverName,
   });
 
@@ -139,6 +140,12 @@ abstract class CareService {
   Future<void> addRoutine(CareRoutine routine, String householdID);
 
   Future<void> updateProfile(Household household, Caregiver caregiver);
+
+  Future<void> addPet(String householdID, Pet pet);
+
+  Future<void> updatePet(String householdID, Pet pet);
+
+  Future<void> removePet(String householdID, String petID);
 
   void leaveHousehold();
 
